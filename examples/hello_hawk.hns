@@ -1,0 +1,14 @@
+/* Hello Hawk - Basic Example
+*/
+
+use capability IO { target: "stdout" }
+
+module Main
+
+lock GREETING = "Welcome to NodeStract"
+
+func main() {
+    stract user = "Developer"
+    
+    IO.print(GREETING + ", " + user)
+}

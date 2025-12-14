@@ -21,6 +21,8 @@ pub enum Token {
     RightBrace,
     LeftParen,
     RightParen,
+    LeftBracket, // <--- NUOVO
+    RightBracket, // <--- NUOVO
     Equal,
     EqualEqual,
     Greater,
@@ -63,6 +65,8 @@ impl Lexer {
                 '}' => { tokens.push(Token::RightBrace); self.position += 1; }
                 '(' => { tokens.push(Token::LeftParen); self.position += 1; }
                 ')' => { tokens.push(Token::RightParen); self.position += 1; }
+                '[' => { tokens.push(Token::LeftBracket); self.position += 1; } // <--- NUOVO
+                ']' => { tokens.push(Token::RightBracket); self.position += 1; } // <--- NUOVO
                 '.' => { 
                     if self.peek_next() == '.' {
                         self.position += 2;

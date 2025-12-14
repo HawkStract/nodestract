@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::env;
+use std::io::{self, Write};
 use crate::ast::{Program, Statement, Expression};
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce};
 use aes_gcm::aead::rand_core::RngCore;
@@ -116,6 +117,22 @@ impl Interpreter {
         }
     }
 
+    // --- ARRAY HELPERS ---
+    // Poiché per ora lavoriamo con Stringhe in memoria, serializziamo le liste come "[1, 2, 3]"
+    fn parse_array_str(val: &str) -> Vec<String> {
+        let trimmed = val.trim();
+        if !trimmed.starts_with('[') || !trimmed.ends_with(']') { return vec![]; }
+        let content = &trimmed[1..trimmed.len()-1];
+        if content.is_empty() { return vec![]; }
+        content.split(',')
+            .map(|s| s.trim().to_string())
+            .collect()
+    }
+
+    fn build_array_str(elems: Vec<String>) -> String {
+        format!("[{}]", elems.join(", "))
+    }
+
     pub fn run(&mut self, program: Program) {
         for stmt in &program.statements {
             match stmt {
@@ -197,7 +214,24 @@ impl Interpreter {
         match expr {
             Expression::LiteralStr(s) => s.clone(),
             Expression::LiteralNum(n) => n.to_string(),
+            // NUOVO: Creazione Array
+            Expression::Array(elements) => {
+                let vals: Vec<String> = elements.iter().map(|e| self.eval_expression(e)).collect();
+                Self::build_array_str(vals)
+            }
             Expression::Variable(name) => self.get_var(name),
+            // NUOVO: Accesso Indice (list[0])
+            Expression::Index { target, index } => {
+                let arr_str = self.eval_expression(target);
+                let idx_val = self.eval_expression(index).parse::<usize>().unwrap_or(0);
+                let elems = Self::parse_array_str(&arr_str);
+                
+                if idx_val < elems.len() {
+                    elems[idx_val].clone()
+                } else {
+                    "undefined".to_string()
+                }
+            },
             Expression::BinaryOp { left, operator, right } => {
                 let l_val = self.eval_expression(left);
                 let r_val = self.eval_expression(right);
@@ -230,7 +264,7 @@ impl Interpreter {
                 if target.contains(".") {
                      let service = target.split('.').next().unwrap_or("");
                      
-                     if !self.capabilities.contains(&service.to_string()) && service != "Sys" {
+                     if !self.capabilities.contains(&service.to_string()) && service != "Sys" && service != "Array" {
                         println!("SECURITY ALERT: Capability '{}' blocked for '{}'. Execution Halted.", service, target);
                         std::process::exit(1);
                     }
@@ -239,6 +273,30 @@ impl Interpreter {
                         let output: Vec<String> = args.iter().map(|a| self.eval_expression(a)).collect();
                         println!("{}", output.join(" "));
                         return String::new();
+                    }
+                    
+                    // NUOVO: Input Utente
+                    if target == "IO.input" {
+                        if let Some(prompt_expr) = args.get(0) {
+                            print!("{}", self.eval_expression(prompt_expr));
+                            io::stdout().flush().unwrap();
+                        }
+                        let mut buffer = String::new();
+                        io::stdin().read_line(&mut buffer).unwrap();
+                        return buffer.trim().to_string();
+                    }
+
+                    // NUOVO: Array Utils
+                    if target == "Array.len" {
+                        let arr = self.eval_expression(&args[0]);
+                        return Self::parse_array_str(&arr).len().to_string();
+                    }
+                    if target == "Array.push" {
+                        let arr = self.eval_expression(&args[0]);
+                        let val = self.eval_expression(&args[1]);
+                        let mut elems = Self::parse_array_str(&arr);
+                        elems.push(val);
+                        return Self::build_array_str(elems);
                     }
                     
                     if target == "Sys.memory_dump" {

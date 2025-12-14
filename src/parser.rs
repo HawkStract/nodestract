@@ -230,6 +230,7 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Expression {
+        // Ora chiama parse_term, che a sua volta chiama parse_unary
         let mut left = self.parse_term();
 
         while matches!(self.current_token(), Token::Plus | Token::Minus | Token::EqualEqual | Token::Greater | Token::Less) {
@@ -253,7 +254,8 @@ impl Parser {
     }
 
     fn parse_term(&mut self) -> Expression {
-        let mut left = self.parse_primary();
+        // FIX: Chiama parse_unary invece di parse_primary
+        let mut left = self.parse_unary();
         while matches!(self.current_token(), Token::Star | Token::Slash) {
             let operator = match self.current_token() {
                 Token::Star => "*".to_string(),
@@ -261,7 +263,8 @@ impl Parser {
                 _ => "".to_string(),
             };
             self.advance();
-            let right = self.parse_primary();
+            // FIX: Chiama parse_unary anche qui
+            let right = self.parse_unary();
             left = Expression::BinaryOp {
                 left: Box::new(left),
                 operator,
@@ -271,8 +274,37 @@ impl Parser {
         left
     }
 
+    // --- NUOVA FUNZIONE PER I NUMERI NEGATIVI ---
+    fn parse_unary(&mut self) -> Expression {
+        if self.current_token() == &Token::Minus {
+            self.advance(); // Salta il segno meno
+            let right = self.parse_unary(); // Ricorsione per gestire - -5
+            
+            // Trasformiamo -X in (0 - X)
+            return Expression::BinaryOp {
+                left: Box::new(Expression::LiteralNum(0.0)),
+                operator: "-".to_string(),
+                right: Box::new(right),
+            };
+        }
+        self.parse_primary()
+    }
+
     fn parse_primary(&mut self) -> Expression {
         match self.current_token() {
+            Token::LeftBracket => {
+                self.advance();
+                let mut elements = Vec::new();
+                if self.current_token() != &Token::RightBracket {
+                    elements.push(self.parse_expression());
+                    while self.current_token() == &Token::Comma {
+                        self.advance();
+                        elements.push(self.parse_expression());
+                    }
+                }
+                self.advance();
+                Expression::Array(elements)
+            }
             Token::StringLiteral(s) => {
                 let val = s.clone(); self.advance();
                 Expression::LiteralStr(val)
@@ -293,21 +325,31 @@ impl Parser {
                     }
                 }
 
-                if self.current_token() == &Token::LeftParen {
-                    self.advance(); 
-                    let mut args = Vec::new();
-                    if self.current_token() != &Token::RightParen {
-                        args.push(self.parse_expression());
-                        while self.current_token() == &Token::Comma {
-                            self.advance();
-                            args.push(self.parse_expression());
-                        }
-                    }
-                    self.advance(); 
-                    return Expression::FunctionCall { target: name, args };
-                }
+                let mut expr = Expression::Variable(name.clone());
 
-                Expression::Variable(name)
+                loop {
+                    if self.current_token() == &Token::LeftBracket {
+                        self.advance();
+                        let index = self.parse_expression();
+                        self.advance(); // ]
+                        expr = Expression::Index { target: Box::new(expr), index: Box::new(index) };
+                    } else if self.current_token() == &Token::LeftParen {
+                        self.advance(); 
+                        let mut args = Vec::new();
+                        if self.current_token() != &Token::RightParen {
+                            args.push(self.parse_expression());
+                            while self.current_token() == &Token::Comma {
+                                self.advance();
+                                args.push(self.parse_expression());
+                            }
+                        }
+                        self.advance(); 
+                        expr = Expression::FunctionCall { target: name.clone(), args }; 
+                    } else {
+                        break;
+                    }
+                }
+                expr
             }
             _ => { self.advance(); Expression::LiteralStr("".to_string()) }
         }

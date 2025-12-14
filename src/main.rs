@@ -1,12 +1,14 @@
 mod lexer;
 mod ast;
 mod parser;
+mod interpreter;
 
 use std::env;
 use std::process;
 use std::fs;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
+use crate::interpreter::Interpreter;
 
 const COLOR_RESET: &str = "\x1b[0m";
 const COLOR_GREEN: &str = "\x1b[32m";
@@ -73,14 +75,17 @@ fn cmd_build(filename: &str) {
             let tokens = lexer.tokenize();
             println!("           Generated {} tokens.", tokens.len());
 
-            println!("     [2/3] Parsing phase (AST Generation)...");
+            println!("     [2/3] Parsing phase...");
             let mut parser = Parser::new(tokens);
             let ast = parser.parse();
             
-            println!("{:#?}", ast); 
+            println!("     [3/3] Executing (Interpreter Mode)...");
+            println!("--------------------------------------------------");
+            let mut interpreter = Interpreter::new();
+            interpreter.run(ast);
+            println!("--------------------------------------------------");
 
-            println!("     [3/3] Compiling to Native... [PENDING]");
-            println!("{}---> Build Successful (Partial){}", COLOR_GREEN, COLOR_RESET);
+            println!("{}---> Execution Successful{}", COLOR_GREEN, COLOR_RESET);
         },
         Err(_) => {
             println!("{}Error: Could not read file '{}'. Check the path.{}", COLOR_RED, filename, COLOR_RESET);

@@ -2,6 +2,7 @@ mod lexer;
 mod ast;
 mod parser;
 mod interpreter;
+mod value;
 
 use std::env;
 use std::process;
@@ -36,7 +37,7 @@ fn main() {
             cmd_build(filename);
         },
         "version" => {
-            println!("NodeStract Compiler (NSC) v0.1.0 - HawkStract Ecosystem");
+            println!("Node Stract Compiler (NSC) v0.6.0 - HawkStract Ecosystem");
         },
         _ => {
             println!("{}Unknown command: '{}'{}", COLOR_RED, command, COLOR_RESET);
@@ -47,11 +48,11 @@ fn main() {
 
 fn print_banner() {
     println!("{}
-    _   _           _      _   _    ____ 
-   | \\ | | ___   __| | ___| \\ | |  / ___|
-   |  \\| |/ _ \\ / _` |/ _ \\  \\| |  \\___ \\
-   | |\\  | (_) | (_| |  __/ |\\  |   ___) |
-   |_| \\_|\\___/ \\__,_|\\___|_| \\_|  |____/ 
+    _   _           _        ____  _                  _   
+   | \\ | | ___  ___| | ___  / ___|| |_ _ __ __ _  ___| |_ 
+   |  \\| |/ _ \\/  _` |/ _ \\ \\___ \\| __| '__/ _` |/ __| __|
+   | |\\  | (_) \\ (_| |  __/  ___) | |_| | | (_| | (__| |_ 
+   |_| \\_|\\___/ \\__,_|\\___| |____/ \\__|_|  \\__,_|\\___|\\__|
    
    HawkStract Ecosystem - Secure. Atomic. Abstract.
    {}", COLOR_CYAN, COLOR_RESET);
@@ -59,7 +60,7 @@ fn print_banner() {
 
 fn print_usage() {
     println!("Usage:");
-    println!("  nsc build <file.hns>   Compile a NodeStract file");
+    println!("  nsc build <file.hns>   Compile a Node Stract file");
     println!("  nsc version            Show version info");
 }
 
@@ -73,7 +74,7 @@ fn cmd_build(filename: &str) {
             println!("     [1/3] Lexing phase...");
             let mut lexer = Lexer::new(&content);
             let tokens = lexer.tokenize();
-            println!("           Generated {} tokens.", tokens.len());
+            println!("          Generated {} tokens.", tokens.len());
 
             println!("     [2/3] Parsing phase...");
             let mut parser = Parser::new(tokens);

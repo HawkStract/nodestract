@@ -1,0 +1,33 @@
+module DataTest;
+use IO {}
+use Array {}
+
+func main() {
+    IO.print("=== AVVIO DATA STRUCTURE TEST ===");
+    stract score = 0;
+
+    stract list = [10, 20, 30];
+    stract val = list[1]; 
+    if val == 20 { score = score + 25; IO.print("[PASS] Lettura Array"); } 
+    else { IO.print("[FAIL] Lettura Array"); }
+
+    list = Array.push(list, 40);
+    stract len = Array.len(list);
+    if len == 4 { score = score + 25; IO.print("[PASS] Array Push & Len"); } 
+    else { IO.print("[FAIL] Array Push/Len"); }
+
+    stract user = { "name": "Hawk", "role": "Admin" };
+    stract name = user["name"];
+    if name == "Hawk" { score = score + 25; IO.print("[PASS] Mappa Semplice"); } 
+    else { IO.print("[FAIL] Mappa"); }
+
+    stract config = { "ids": [1, 99] };
+    stract ids = config["ids"];
+    stract id_val = ids[1]; 
+
+    if id_val == 99 { score = score + 25; IO.print("[PASS] Struttura Nidificata"); } 
+    else { IO.print("[FAIL] Nidificata"); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE DATA:", score, "/ 100");
+}

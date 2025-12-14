@@ -1,0 +1,30 @@
+module MathTest;
+use IO {}
+
+func main() {
+    IO.print("=== AVVIO MATH TEST (Target: 100/100) ===");
+    stract score = 0;
+
+    stract int_res = 10 + 5 * 2; 
+    if int_res == 20 { score = score + 20; IO.print("[PASS] Precedenza Interi"); } 
+    else { IO.print("[FAIL] Precedenza"); }
+
+    stract float_res = 10.5 + 0.5;
+    if float_res == 11.0 { score = score + 20; IO.print("[PASS] Somma Float"); } 
+    else { IO.print("[FAIL] Somma Float"); }
+
+    stract mix = 5 + 2.5; 
+    if mix == 7.5 { score = score + 20; IO.print("[PASS] Int + Float"); } 
+    else { IO.print("[FAIL] Int + Float"); }
+
+    stract div = 10 / 4; 
+    if div == 2 { score = score + 20; IO.print("[PASS] Divisione Intera"); } 
+    else { IO.print("[FAIL] Divisione"); }
+    
+    stract neg = 0 - 10;
+    if neg == -10 { score = score + 20; IO.print("[PASS] Numeri Negativi"); } 
+    else { IO.print("[FAIL] Negativi"); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE MATEMATICA:", score, "/ 100");
+}

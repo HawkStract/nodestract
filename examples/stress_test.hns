@@ -1,0 +1,18 @@
+module StressTest;
+use IO {}
+
+func main() {
+    IO.print("=== AVVIO STRESS TEST ===");
+    stract total_score = 0;
+    stract i = 0;
+    while i < 100 {
+        stract calc = i * 2;
+        stract check = calc / 2;
+        if check == i { total_score = total_score + 1; }
+        i = i + 1;
+    }
+    IO.print("Iterazioni:", i);
+    IO.print("PUNTEGGIO TOTALE STRESS:", total_score, "/ 100");
+    if total_score == 100 { IO.print("RESULT: STABLE"); } 
+    else { IO.print("RESULT: UNSTABLE"); }
+}

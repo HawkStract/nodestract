@@ -1,8 +1,8 @@
 [package]
-name = "nsc"
-version = "0.3.0"
+name = "hns"
+version = "0.5.0"
 edition = "2021"
-authors = ["HawkStract Labs"]
+authors = ["HawkStract"]
 description = "The official compiler for the NodeStract (.hns) language"
 
 [dependencies]

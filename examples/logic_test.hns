@@ -1,30 +1,30 @@
-use capability IO { target: "stdout" }
-
-module LogicTest
+module LogicTest;
+use IO {}
 
 func main() {
-    stract balance = 1000
-    stract amount = 200
+    IO.print("=== AVVIO LOGIC TEST (Target: 100/100) ===");
+    stract score = 0;
 
-    IO.print("--- TEST LOGICA ---")
-    IO.print("Saldo Iniziale:", balance)
+    stract a = 10;
+    stract b = 20;
+    if a < b { score = score + 25; IO.print("[PASS] If statement basilare"); } 
+    else { IO.print("[FAIL] If statement basilare"); }
 
-    if amount < balance {
-        balance = balance - amount
-        IO.print("Pagamento OK. Nuovo saldo:", balance)
-    }
+    stract check = 0;
+    if a == 10 { if b == 20 { check = 1; } }
+    if check == 1 { score = score + 25; IO.print("[PASS] Nested If"); } 
+    else { IO.print("[FAIL] Nested If"); }
 
-    IO.print("--- TEST CICLO WHILE ---")
-    stract count = 3
-    while count > 0 {
-        IO.print("Conto alla rovescia:", count)
-        count = count - 1
-    }
+    stract i = 0;
+    while i < 25 { i = i + 1; }
+    if i == 25 { score = score + 25; IO.print("[PASS] While Loop"); } 
+    else { IO.print("[FAIL] While Loop. i =", i); }
 
-    IO.print("--- TEST CICLO FOR ---")
-    for i in 1..4 {
-        IO.print("Iterazione For numero:", i)
-    }
-    
-    IO.print("--- TEST COMPLETATO ---")
+    stract for_count = 0;
+    for k 0 25 { for_count = for_count + 1; }
+    if for_count == 25 { score = score + 25; IO.print("[PASS] For Loop"); } 
+    else { IO.print("[FAIL] For Loop. count =", for_count); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE LOGICA:", score, "/ 100");
 }

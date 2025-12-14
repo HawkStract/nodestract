@@ -46,9 +46,8 @@ pub enum Statement {
 pub enum Expression {
     LiteralStr(String),
     LiteralNum(f64),
-    // NUOVO: Array definition [1, 2, 3]
     Array(Vec<Expression>),
-    // NUOVO: Index Access var[0]
+    Map(Vec<(String, Expression)>),
     Index {
         target: Box<Expression>,
         index: Box<Expression>,

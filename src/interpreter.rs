@@ -2,14 +2,23 @@ use std::collections::HashMap;
 use std::env;
 use std::io::{self, Write};
 use crate::ast::{Program, Statement, Expression};
+use crate::value::Value;
+
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce};
 use aes_gcm::aead::rand_core::RngCore;
 
+#[derive(Clone, Debug)]
+struct VarEntry {
+    value: Value,
+    is_mutable: bool,
+    is_secure: bool,
+}
+
 pub struct Interpreter {
-    scopes: Vec<HashMap<String, String>>,
+    scopes: Vec<HashMap<String, VarEntry>>,
     capabilities: Vec<String>,
     functions: HashMap<String, Statement>,
-    last_return: Option<String>,
+    last_return: Option<Value>,
 }
 
 impl Interpreter {
@@ -23,46 +32,64 @@ impl Interpreter {
         }
     }
 
-    fn current_scope(&mut self) -> &mut HashMap<String, String> {
+    fn current_scope(&mut self) -> &mut HashMap<String, VarEntry> {
         self.scopes.last_mut().unwrap()
     }
 
-    fn get_var(&self, name: &str) -> String {
+    fn get_var(&self, name: &str) -> Value {
         for scope in self.scopes.iter().rev() {
-            if let Some(val) = scope.get(name) {
-                if val.starts_with("ENC:") {
-                    return Self::decrypt_vault(val);
+            if let Some(entry) = scope.get(name) {
+                if let Value::String(s) = &entry.value {
+                    if s.starts_with("ENC:") {
+                        let decrypted = Self::decrypt_vault(s);
+                        return Value::String(decrypted);
+                    }
                 }
-                return val.clone();
+                return entry.value.clone();
             }
         }
-        "undefined".to_string()
+        Value::Null
     }
 
-    fn get_raw_memory(&self, name: &str) -> String {
-        for scope in self.scopes.iter().rev() {
-            if let Some(val) = scope.get(name) {
-                return val.clone();
-            }
-        }
-        "undefined".to_string()
-    }
-
-    fn set_var(&mut self, name: String, value: String) {
+    fn set_var(&mut self, name: String, value: Value) {
         for scope in self.scopes.iter_mut().rev() {
-            if scope.contains_key(&name) {
-                let is_encrypted = scope.get(&name).map(|v| v.starts_with("ENC:")).unwrap_or(false);
-                let final_val = if is_encrypted { Self::encrypt_vault(&value) } else { value };
-                scope.insert(name, final_val);
+            if let Some(entry) = scope.get_mut(&name) {
+                if !entry.is_mutable {
+                    println!("Runtime Error: Cannot assign to lock (constant) '{}'.", name);
+                    return; 
+                }
+
+                let final_val = if entry.is_secure {
+                    let s = value.to_string(); 
+                    let enc = Self::encrypt_vault(&s);
+                    Value::String(enc)
+                } else {
+                    value
+                };
+
+                entry.value = final_val;
                 return;
             }
         }
-        println!("Error: Variable '{}' not declared before assignment.", name);
+        println!("Runtime Error: Variable '{}' not declared before assignment.", name);
     }
 
-    fn define_var(&mut self, name: String, value: String, is_secure: bool) {
-        let final_val = if is_secure { Self::encrypt_vault(&value) } else { value };
-        self.current_scope().insert(name, final_val);
+    fn define_var(&mut self, name: String, value: Value, is_mutable: bool, is_secure: bool) {
+        let final_val = if is_secure {
+            let s = value.to_string();
+            let enc = Self::encrypt_vault(&s);
+            Value::String(enc)
+        } else {
+            value
+        };
+        
+        let entry = VarEntry {
+            value: final_val,
+            is_mutable,
+            is_secure,
+        };
+        
+        self.current_scope().insert(name, entry);
     }
 
     fn get_key() -> [u8; 32] {
@@ -117,22 +144,6 @@ impl Interpreter {
         }
     }
 
-    // --- ARRAY HELPERS ---
-    // Poiché per ora lavoriamo con Stringhe in memoria, serializziamo le liste come "[1, 2, 3]"
-    fn parse_array_str(val: &str) -> Vec<String> {
-        let trimmed = val.trim();
-        if !trimmed.starts_with('[') || !trimmed.ends_with(']') { return vec![]; }
-        let content = &trimmed[1..trimmed.len()-1];
-        if content.is_empty() { return vec![]; }
-        content.split(',')
-            .map(|s| s.trim().to_string())
-            .collect()
-    }
-
-    fn build_array_str(elems: Vec<String>) -> String {
-        format!("[{}]", elems.join(", "))
-    }
-
     pub fn run(&mut self, program: Program) {
         for stmt in &program.statements {
             match stmt {
@@ -164,9 +175,9 @@ impl Interpreter {
         if self.last_return.is_some() { return; }
 
         match stmt {
-            Statement::VarDecl { name, value, is_secure, .. } => {
+            Statement::VarDecl { name, value, is_mutable, is_secure } => {
                 let val = self.eval_expression(value);
-                self.define_var(name.clone(), val, *is_secure);
+                self.define_var(name.clone(), val, *is_mutable, *is_secure);
             }
             Statement::Assignment { name, value } => {
                 let val = self.eval_expression(value);
@@ -174,14 +185,14 @@ impl Interpreter {
             }
             Statement::IfStatement { condition, then_branch, else_branch } => {
                 let cond_val = self.eval_expression(condition);
-                if cond_val == "true" {
+                if cond_val.is_truthy() {
                     for s in then_branch { self.execute_statement(s); }
                 } else if let Some(else_stmts) = else_branch {
                     for s in else_stmts { self.execute_statement(s); }
                 }
             }
             Statement::WhileStatement { condition, body } => {
-                while self.eval_expression(condition) == "true" {
+                while self.eval_expression(condition).is_truthy() {
                     for s in body {
                         self.execute_statement(s);
                         if self.last_return.is_some() { return; }
@@ -189,11 +200,22 @@ impl Interpreter {
                 }
             }
             Statement::ForStatement { iterator, start, end, body } => {
-                let start_val = self.eval_expression(start).parse::<i64>().unwrap_or(0);
-                let end_val = self.eval_expression(end).parse::<i64>().unwrap_or(0);
+                let start_val = self.eval_expression(start);
+                let end_val = self.eval_expression(end);
 
-                for i in start_val..end_val {
-                    self.define_var(iterator.clone(), i.to_string(), false);
+                let start_int = match start_val {
+                    Value::Integer(i) => i,
+                    Value::Float(f) => f as i64,
+                    _ => 0,
+                };
+                let end_int = match end_val {
+                    Value::Integer(i) => i,
+                    Value::Float(f) => f as i64,
+                    _ => 0,
+                };
+
+                for i in start_int..end_int {
+                    self.define_var(iterator.clone(), Value::Integer(i), false, false);
                     for s in body {
                         self.execute_statement(s);
                         if self.last_return.is_some() { return; }
@@ -210,131 +232,194 @@ impl Interpreter {
         }
     }
 
-    fn eval_expression(&mut self, expr: &Expression) -> String {
+    fn eval_expression(&mut self, expr: &Expression) -> Value {
         match expr {
-            Expression::LiteralStr(s) => s.clone(),
-            Expression::LiteralNum(n) => n.to_string(),
-            // NUOVO: Creazione Array
-            Expression::Array(elements) => {
-                let vals: Vec<String> = elements.iter().map(|e| self.eval_expression(e)).collect();
-                Self::build_array_str(vals)
-            }
-            Expression::Variable(name) => self.get_var(name),
-            // NUOVO: Accesso Indice (list[0])
-            Expression::Index { target, index } => {
-                let arr_str = self.eval_expression(target);
-                let idx_val = self.eval_expression(index).parse::<usize>().unwrap_or(0);
-                let elems = Self::parse_array_str(&arr_str);
-                
-                if idx_val < elems.len() {
-                    elems[idx_val].clone()
+            Expression::LiteralStr(s) => Value::String(s.clone()),
+            Expression::LiteralNum(n) => {
+                if n.fract() == 0.0 {
+                    Value::Integer(*n as i64)
                 } else {
-                    "undefined".to_string()
+                    Value::Float(*n)
                 }
             },
+            Expression::Array(elements) => {
+                let vals: Vec<Value> = elements.iter().map(|e| self.eval_expression(e)).collect();
+                Value::Array(vals)
+            },
+            Expression::Map(pairs) => {
+                let mut map = HashMap::new();
+                for (k, v_expr) in pairs {
+                    let val = self.eval_expression(v_expr);
+                    map.insert(k.clone(), val);
+                }
+                Value::Map(map)
+            },
+            Expression::Variable(name) => self.get_var(name),
+            Expression::Index { target, index } => {
+                let target_val = self.eval_expression(target);
+                let index_val = self.eval_expression(index);
+
+                match target_val {
+                    Value::Array(arr) => {
+                        let idx = match index_val {
+                            Value::Integer(i) => i as usize,
+                            Value::Float(f) => f as usize,
+                            _ => return Value::Null,
+                        };
+                        if idx < arr.len() { return arr[idx].clone(); }
+                    },
+                    Value::Map(map) => {
+                        let key = index_val.to_string();
+                        if let Some(val) = map.get(&key) {
+                            return val.clone();
+                        }
+                    },
+                    _ => {}
+                }
+                Value::Null
+            },
             Expression::BinaryOp { left, operator, right } => {
-                let l_val = self.eval_expression(left);
-                let r_val = self.eval_expression(right);
-                
-                let l_num = l_val.parse::<f64>();
-                let r_num = r_val.parse::<f64>();
-
-                if let (Ok(l), Ok(r)) = (l_num, r_num) {
-                    match operator.as_str() {
-                        "+" => (l + r).to_string(),
-                        "-" => (l - r).to_string(),
-                        "*" => (l * r).to_string(),
-                        "/" => (l / r).to_string(),
-                        ">" => (l > r).to_string(),
-                        "<" => (l < r).to_string(),
-                        "==" => (l == r).to_string(),
-                        _ => "0".to_string(),
-                    }
-                } else {
-                    if operator == "+" {
-                        format!("{}{}", l_val, r_val)
-                    } else if operator == "==" {
-                         (l_val == r_val).to_string()
-                    } else {
-                        "NaN".to_string()
-                    }
-                }
-            }
+                let l = self.eval_expression(left);
+                let r = self.eval_expression(right);
+                self.eval_binary_op(l, operator, r)
+            },
             Expression::FunctionCall { target, args } => {
-                if target.contains(".") {
-                     let service = target.split('.').next().unwrap_or("");
-                     
-                     if !self.capabilities.contains(&service.to_string()) && service != "Sys" && service != "Array" {
-                        println!("SECURITY ALERT: Capability '{}' blocked for '{}'. Execution Halted.", service, target);
-                        std::process::exit(1);
-                    }
-
-                    if target == "IO.print" {
-                        let output: Vec<String> = args.iter().map(|a| self.eval_expression(a)).collect();
-                        println!("{}", output.join(" "));
-                        return String::new();
-                    }
-                    
-                    // NUOVO: Input Utente
-                    if target == "IO.input" {
-                        if let Some(prompt_expr) = args.get(0) {
-                            print!("{}", self.eval_expression(prompt_expr));
-                            io::stdout().flush().unwrap();
-                        }
-                        let mut buffer = String::new();
-                        io::stdin().read_line(&mut buffer).unwrap();
-                        return buffer.trim().to_string();
-                    }
-
-                    // NUOVO: Array Utils
-                    if target == "Array.len" {
-                        let arr = self.eval_expression(&args[0]);
-                        return Self::parse_array_str(&arr).len().to_string();
-                    }
-                    if target == "Array.push" {
-                        let arr = self.eval_expression(&args[0]);
-                        let val = self.eval_expression(&args[1]);
-                        let mut elems = Self::parse_array_str(&arr);
-                        elems.push(val);
-                        return Self::build_array_str(elems);
-                    }
-                    
-                    if target == "Sys.memory_dump" {
-                        if let Some(Expression::Variable(var_name)) = args.get(0) {
-                            let raw_val = self.get_raw_memory(var_name);
-                            println!("[RAM DUMP] Variable '{}' -> '{}'", var_name, raw_val);
-                        }
-                        return String::new();
-                    }
-                }
-
-                if let Some(func_stmt) = self.functions.get(target).cloned() {
-                    if let Statement::FunctionDecl { params, body, .. } = func_stmt {
-                        let mut new_scope = HashMap::new();
-                        for (i, param_name) in params.iter().enumerate() {
-                            let arg_val = if i < args.len() {
-                                self.eval_expression(&args[i])
-                            } else {
-                                "undefined".to_string()
-                            };
-                            new_scope.insert(param_name.clone(), arg_val);
-                        }
-
-                        self.scopes.push(new_scope);
-                        for s in body {
-                            self.execute_statement(&s);
-                            if self.last_return.is_some() { break; }
-                        }
-                        self.scopes.pop();
-                        
-                        let result = self.last_return.clone().unwrap_or_else(|| "undefined".to_string());
-                        self.last_return = None;
-                        return result;
-                    }
-                }
-                
-                "undefined".to_string()
+                self.handle_function_call(target, args)
             }
         }
+    }
+
+    fn eval_binary_op(&self, left: Value, operator: &str, right: Value) -> Value {
+        match (left, right) {
+            (Value::Integer(a), Value::Integer(b)) => match operator {
+                "+" => Value::Integer(a + b),
+                "-" => Value::Integer(a - b),
+                "*" => Value::Integer(a * b),
+                "/" => Value::Integer(a / b),
+                ">" => Value::Boolean(a > b),
+                "<" => Value::Boolean(a < b),
+                "==" => Value::Boolean(a == b),
+                _ => Value::Null,
+            },
+            (Value::Float(a), Value::Float(b)) => match operator {
+                "+" => Value::Float(a + b),
+                "-" => Value::Float(a - b),
+                "*" => Value::Float(a * b),
+                "/" => Value::Float(a / b),
+                ">" => Value::Boolean(a > b),
+                "<" => Value::Boolean(a < b),
+                "==" => Value::Boolean(a == b),
+                _ => Value::Null,
+            },
+            (Value::Integer(a), Value::Float(b)) => self.eval_binary_op(Value::Float(a as f64), operator, Value::Float(b)),
+            (Value::Float(a), Value::Integer(b)) => self.eval_binary_op(Value::Float(a), operator, Value::Float(b as f64)),
+
+            (Value::String(a), Value::String(b)) => match operator {
+                "+" => Value::String(a + &b),
+                "==" => Value::Boolean(a == b),
+                _ => Value::Null,
+            },
+            (Value::String(a), b) => match operator {
+                "+" => Value::String(format!("{}{}", a, b)),
+                _ => Value::Null,
+            },
+            (a, Value::String(b)) => match operator {
+                "+" => Value::String(format!("{}{}", a, b)),
+                _ => Value::Null,
+            },
+
+            _ => Value::Null,
+        }
+    }
+
+    fn handle_function_call(&mut self, target: &str, args: &Vec<Expression>) -> Value {
+        if target.contains(".") {
+            let service = target.split('.').next().unwrap_or("");
+            
+            if !self.capabilities.contains(&service.to_string()) && service != "Sys" && service != "Array" {
+                println!("SECURITY ALERT: Capability '{}' blocked for '{}'. Execution Halted.", service, target);
+                std::process::exit(1);
+            }
+
+            match target {
+                "IO.print" => {
+                    let output: Vec<String> = args.iter()
+                        .map(|a| self.eval_expression(a).to_string())
+                        .collect();
+                    println!("{}", output.join(" "));
+                    return Value::Null;
+                },
+                "IO.input" => {
+                    if let Some(prompt_expr) = args.get(0) {
+                        print!("{}", self.eval_expression(prompt_expr));
+                        io::stdout().flush().unwrap();
+                    }
+                    let mut buffer = String::new();
+                    io::stdin().read_line(&mut buffer).unwrap();
+                    return Value::String(buffer.trim().to_string());
+                },
+                "Array.len" => {
+                    if let Some(arg) = args.get(0) {
+                        if let Value::Array(arr) = self.eval_expression(arg) {
+                            return Value::Integer(arr.len() as i64);
+                        }
+                    }
+                    return Value::Integer(0);
+                },
+                "Array.push" => {
+                    if args.len() >= 2 {
+                        let mut arr_val = self.eval_expression(&args[0]);
+                        let val_to_push = self.eval_expression(&args[1]);
+                        
+                        if let Value::Array(ref mut arr) = arr_val {
+                            arr.push(val_to_push);
+                            return Value::Array(arr.clone());
+                        }
+                    }
+                    return Value::Null;
+                },
+                "Sys.memory_dump" => {
+                    if let Some(Expression::Variable(var_name)) = args.get(0) {
+                        let val = self.get_var(var_name);
+                        println!("[RAM DUMP] Variable '{}' -> {:?}", var_name, val);
+                    }
+                    return Value::Null;
+                }
+                _ => {}
+            }
+        }
+
+        if let Some(func_stmt) = self.functions.get(target).cloned() {
+            if let Statement::FunctionDecl { params, body, .. } = func_stmt {
+                let mut new_scope = HashMap::new();
+                for (i, param_name) in params.iter().enumerate() {
+                    let arg_val = if i < args.len() {
+                        self.eval_expression(&args[i])
+                    } else {
+                        Value::Null
+                    };
+                    
+                    let entry = VarEntry {
+                        value: arg_val,
+                        is_mutable: true,
+                        is_secure: false,
+                    };
+                    new_scope.insert(param_name.clone(), entry);
+                }
+
+                self.scopes.push(new_scope);
+                for s in body {
+                    self.execute_statement(&s);
+                    if self.last_return.is_some() { break; }
+                }
+                self.scopes.pop();
+                
+                let result = self.last_return.clone().unwrap_or(Value::Null);
+                self.last_return = None;
+                return result;
+            }
+        }
+        
+        Value::Null
     }
 }

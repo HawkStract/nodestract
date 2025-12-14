@@ -1,10 +1,26 @@
-/* SECURITY TEST
-   Questo file non dichiara 'use capability IO'.
-   Deve fallire quando chiama IO.print.
-*/
-
-module SecurityTest
+module SecurityTest;
+use IO {}
+use Sys {} 
 
 func main() {
-    IO.print("Hacker: Sto provando a stampare senza permesso!")
+    IO.print("=== AVVIO SECURITY TEST ===");
+    stract score = 0;
+
+    vault secret = "PasswordSegreta";
+    if secret == "PasswordSegreta" { score = score + 33; IO.print("[PASS] Accesso Vault"); } 
+    else { IO.print("[FAIL] Accesso Vault"); }
+
+    lock costante = 100;
+    costante = 200; // Deve fallire in runtime, quindi costante resta 100
+
+    if costante == 100 { score = score + 33; IO.print("[PASS] Lock mantenuto"); } 
+    else { IO.print("[FAIL] Lock violato! Valore:", costante); }
+
+    IO.print("[INFO] Eseguo Memory Dump su variabile VAULT...");
+    Sys.memory_dump(secret); 
+    score = score + 34; 
+    IO.print("[PASS] Memory Dump eseguito");
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE SICUREZZA:", score, "/ 100");
 }

@@ -21,8 +21,8 @@ pub enum Token {
     RightBrace,
     LeftParen,
     RightParen,
-    LeftBracket, // <--- NUOVO
-    RightBracket, // <--- NUOVO
+    LeftBracket,
+    RightBracket,
     Equal,
     EqualEqual,
     Greater,
@@ -34,6 +34,7 @@ pub enum Token {
     Dot,
     Range,
     Comma,
+    Colon,
     EOF,
     Unknown(char),
 }
@@ -53,7 +54,7 @@ impl Lexer {
 
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
-        
+
         while self.position < self.input.len() {
             let char = self.input[self.position];
 
@@ -65,8 +66,8 @@ impl Lexer {
                 '}' => { tokens.push(Token::RightBrace); self.position += 1; }
                 '(' => { tokens.push(Token::LeftParen); self.position += 1; }
                 ')' => { tokens.push(Token::RightParen); self.position += 1; }
-                '[' => { tokens.push(Token::LeftBracket); self.position += 1; } // <--- NUOVO
-                ']' => { tokens.push(Token::RightBracket); self.position += 1; } // <--- NUOVO
+                '[' => { tokens.push(Token::LeftBracket); self.position += 1; }
+                ']' => { tokens.push(Token::RightBracket); self.position += 1; }
                 '.' => { 
                     if self.peek_next() == '.' {
                         self.position += 2;
@@ -77,6 +78,7 @@ impl Lexer {
                     }
                 }
                 ',' => { tokens.push(Token::Comma); self.position += 1; }
+                ':' => { tokens.push(Token::Colon); self.position += 1; }
                 '+' => { tokens.push(Token::Plus); self.position += 1; }
                 '-' => { tokens.push(Token::Minus); self.position += 1; }
                 '*' => { tokens.push(Token::Star); self.position += 1; }

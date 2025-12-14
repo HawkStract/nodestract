@@ -1,0 +1,10 @@
+/* SECURITY TEST
+   Questo file non dichiara 'use capability IO'.
+   Deve fallire quando chiama IO.print.
+*/
+
+module SecurityTest
+
+func main() {
+    IO.print("Hacker: Sto provando a stampare senza permesso!")
+}

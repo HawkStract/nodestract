@@ -1,9 +1,11 @@
 [package]
 name = "nsc"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
-authors = ["HawkStract"]
+authors = ["HawkStract Labs"]
 description = "The official compiler for the NodeStract (.hns) language"
 
-# Al momento nessuna dipendenza esterna per mantenere il core leggero
 [dependencies]
+aes-gcm = "0.10.3"
+rand = "0.8.5"
+hex = "0.4.3"

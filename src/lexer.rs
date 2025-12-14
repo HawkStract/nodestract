@@ -10,6 +10,10 @@ pub enum Token {
     Func,
     If,
     Else,
+    While,
+    For,
+    In,
+    Return,
     Identifier(String),
     StringLiteral(String),
     Number(f64),
@@ -26,6 +30,7 @@ pub enum Token {
     Star,
     Slash,
     Dot,
+    Range,
     Comma,
     EOF,
     Unknown(char),
@@ -58,7 +63,15 @@ impl Lexer {
                 '}' => { tokens.push(Token::RightBrace); self.position += 1; }
                 '(' => { tokens.push(Token::LeftParen); self.position += 1; }
                 ')' => { tokens.push(Token::RightParen); self.position += 1; }
-                '.' => { tokens.push(Token::Dot); self.position += 1; }
+                '.' => { 
+                    if self.peek_next() == '.' {
+                        self.position += 2;
+                        tokens.push(Token::Range);
+                    } else {
+                        tokens.push(Token::Dot); 
+                        self.position += 1; 
+                    }
+                }
                 ',' => { tokens.push(Token::Comma); self.position += 1; }
                 '+' => { tokens.push(Token::Plus); self.position += 1; }
                 '-' => { tokens.push(Token::Minus); self.position += 1; }
@@ -121,6 +134,10 @@ impl Lexer {
             "func" => Token::Func,
             "if" => Token::If,
             "else" => Token::Else,
+            "while" => Token::While,
+            "for" => Token::For,
+            "in" => Token::In,
+            "return" => Token::Return,
             _ => Token::Identifier(text),
         }
     }

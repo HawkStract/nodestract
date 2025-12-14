@@ -4,18 +4,27 @@ module LogicTest
 
 func main() {
     stract balance = 1000
-    stract amount = 500
+    stract amount = 200
 
-    IO.print("Conto attuale:", balance)
-    
+    IO.print("--- TEST LOGICA ---")
+    IO.print("Saldo Iniziale:", balance)
+
     if amount < balance {
         balance = balance - amount
-        IO.print("Pagamento accettato. Nuovo saldo:", balance)
-    } else {
-        IO.print("Errore: Fondi insufficienti")
+        IO.print("Pagamento OK. Nuovo saldo:", balance)
     }
 
-    if balance == 500 {
-        IO.print("CHECK: Il saldo è corretto.")
+    IO.print("--- TEST CICLO WHILE ---")
+    stract count = 3
+    while count > 0 {
+        IO.print("Conto alla rovescia:", count)
+        count = count - 1
     }
+
+    IO.print("--- TEST CICLO FOR ---")
+    for i in 1..4 {
+        IO.print("Iterazione For numero:", i)
+    }
+    
+    IO.print("--- TEST COMPLETATO ---")
 }

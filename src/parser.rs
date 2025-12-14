@@ -68,11 +68,28 @@ impl Parser {
             _ => "Anon".to_string(),
         };
         self.advance();
-        while self.current_token() != &Token::LeftBrace { self.advance(); }
-        self.advance();
+        
+        self.advance(); 
+        let mut params = Vec::new();
+        if self.current_token() != &Token::RightParen {
+            if let Token::Identifier(param_name) = self.current_token() {
+                params.push(param_name.clone());
+                self.advance();
+            }
+            while self.current_token() == &Token::Comma {
+                self.advance();
+                if let Token::Identifier(param_name) = self.current_token() {
+                    params.push(param_name.clone());
+                    self.advance();
+                }
+            }
+        }
+        self.advance(); 
+
+        self.advance(); 
 
         let body = self.parse_block();
-        Statement::FunctionDecl { name, body }
+        Statement::FunctionDecl { name, params, body }
     }
 
     fn parse_block(&mut self) -> Vec<Statement> {
@@ -87,8 +104,16 @@ impl Parser {
                 Token::If => {
                     body.push(self.parse_if_statement());
                 }
+                Token::While => {
+                    body.push(self.parse_while_statement());
+                }
+                Token::For => {
+                    body.push(self.parse_for_statement());
+                }
+                Token::Return => {
+                    body.push(self.parse_return_statement());
+                }
                 Token::Identifier(_) => {
-                    // Decide se è assegnazione (balance = ...) o funzione (IO.print)
                     if self.peek() == &Token::Equal {
                         body.push(self.parse_assignment());
                     } else {
@@ -102,13 +127,19 @@ impl Parser {
         body
     }
 
+    fn parse_return_statement(&mut self) -> Statement {
+        self.advance(); 
+        let value = self.parse_expression();
+        Statement::ReturnStatement { value }
+    }
+
     fn parse_assignment(&mut self) -> Statement {
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "Unknown".to_string(),
         };
-        self.advance(); // Salta nome
-        self.advance(); // Salta '='
+        self.advance(); 
+        self.advance(); 
         let value = self.parse_expression();
         Statement::Assignment { name, value }
     }
@@ -133,17 +164,54 @@ impl Parser {
         Statement::IfStatement { condition, then_branch, else_branch }
     }
 
+    fn parse_while_statement(&mut self) -> Statement {
+        self.advance();
+        let condition = self.parse_expression();
+        while self.current_token() != &Token::LeftBrace { self.advance(); }
+        self.advance();
+        let body = self.parse_block();
+        Statement::WhileStatement { condition, body }
+    }
+
+    fn parse_for_statement(&mut self) -> Statement {
+        self.advance();
+        let iterator = match self.current_token() {
+            Token::Identifier(s) => s.clone(),
+            _ => "i".to_string(),
+        };
+        self.advance(); 
+        self.advance(); 
+        let start = self.parse_primary();
+        self.advance(); 
+        let end = self.parse_primary();
+        
+        while self.current_token() != &Token::LeftBrace { self.advance(); }
+        self.advance();
+        let body = self.parse_block();
+
+        Statement::ForStatement { iterator, start, end, body }
+    }
+
     fn parse_func_call_stmt(&mut self) -> Statement {
-        let target = match self.current_token() {
+        let mut target = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "".to_string(),
         };
-        self.advance(); self.advance();
-        let method = match self.current_token() {
-            Token::Identifier(s) => s.clone(),
-            _ => "".to_string(),
-        };
-        self.advance(); self.advance();
+        self.advance(); 
+
+        if self.current_token() == &Token::Dot {
+            self.advance(); 
+            let method = match self.current_token() {
+                Token::Identifier(s) => s.clone(),
+                _ => "".to_string(),
+            };
+            self.advance(); 
+            target = format!("{}.{}", target, method);
+        }
+
+        if self.current_token() == &Token::LeftParen {
+            self.advance();
+        }
 
         let mut args = Vec::new();
         if self.current_token() != &Token::RightParen {
@@ -153,10 +221,10 @@ impl Parser {
                 args.push(self.parse_expression());
             }
         }
-        self.advance();
+        self.advance(); 
 
         Statement::Expr(Expression::FunctionCall {
-            target: format!("{}.{}", target, method),
+            target,
             args,
         })
     }
@@ -214,8 +282,32 @@ impl Parser {
                 Expression::LiteralNum(val)
             }
             Token::Identifier(s) => {
-                let val = s.clone(); self.advance();
-                Expression::Variable(val)
+                let mut name = s.clone();
+                self.advance();
+
+                if self.current_token() == &Token::Dot {
+                    self.advance();
+                    if let Token::Identifier(method) = self.current_token() {
+                         name = format!("{}.{}", name, method);
+                         self.advance();
+                    }
+                }
+
+                if self.current_token() == &Token::LeftParen {
+                    self.advance(); 
+                    let mut args = Vec::new();
+                    if self.current_token() != &Token::RightParen {
+                        args.push(self.parse_expression());
+                        while self.current_token() == &Token::Comma {
+                            self.advance();
+                            args.push(self.parse_expression());
+                        }
+                    }
+                    self.advance(); 
+                    return Expression::FunctionCall { target: name, args };
+                }
+
+                Expression::Variable(name)
             }
             _ => { self.advance(); Expression::LiteralStr("".to_string()) }
         }

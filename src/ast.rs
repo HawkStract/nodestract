@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     VarDecl {
         is_mutable: bool,
@@ -16,19 +16,33 @@ pub enum Statement {
         then_branch: Vec<Statement>,
         else_branch: Option<Vec<Statement>>,
     },
+    WhileStatement {
+        condition: Expression,
+        body: Vec<Statement>,
+    },
+    ForStatement {
+        iterator: String,
+        start: Expression,
+        end: Expression,
+        body: Vec<Statement>,
+    },
+    ReturnStatement {
+        value: Expression,
+    },
     CapabilityUse {
         service: String,
         params: Vec<(String, String)>,
     },
     FunctionDecl {
         name: String,
+        params: Vec<String>,
         body: Vec<Statement>,
     },
     Expr(Expression),
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     LiteralStr(String),
     LiteralNum(f64),
@@ -44,7 +58,7 @@ pub enum Expression {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Program {
     pub statements: Vec<Statement>,
 }

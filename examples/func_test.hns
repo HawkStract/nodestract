@@ -1,0 +1,23 @@
+use capability IO { target: "stdout" }
+
+module FuncTest
+
+// Funzione personalizzata che somma due numeri
+func sum(a, b) {
+    return a + b
+}
+
+func main() {
+    IO.print("--- TEST FUNZIONI ---")
+    
+    // Test chiamata funzione con ritorno
+    stract res = sum(10, 50)
+    
+    IO.print("Calcolo: 10 + 50 = ", res)
+    
+    if res == 60 {
+        IO.print("SUCCESS: La funzione funziona correttamente.")
+    } else {
+        IO.print("FAIL: Risultato inatteso.")
+    }
+}

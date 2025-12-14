@@ -1,25 +1,27 @@
+mod lexer;
+mod ast;
+mod parser;
+
 use std::env;
 use std::process;
 use std::fs;
+use crate::lexer::Lexer;
+use crate::parser::Parser;
 
-// Definiamo i colori per l'output in console (HawkStract Style)
 const COLOR_RESET: &str = "\x1b[0m";
 const COLOR_GREEN: &str = "\x1b[32m";
 const COLOR_RED: &str = "\x1b[31m";
 const COLOR_CYAN: &str = "\x1b[36m";
 
 fn main() {
-    // 1. Legge gli argomenti passati da riga di comando
     let args: Vec<String> = env::args().collect();
 
-    // 2. Se non ci sono argomenti, mostra l'help
     if args.len() < 2 {
         print_banner();
         print_usage();
         process::exit(0);
     }
 
-    // 3. Parsing del comando (es. "build", "version")
     let command = &args[1];
 
     match command.as_str() {
@@ -59,18 +61,26 @@ fn print_usage() {
     println!("  nsc version            Show version info");
 }
 
-// Funzione che simula la compilazione (Core Logic)
 fn cmd_build(filename: &str) {
     println!("{}---> Starting build process for: {}{}", COLOR_GREEN, filename, COLOR_RESET);
     
-    // Prova a leggere il file
     match fs::read_to_string(filename) {
         Ok(content) => {
             println!("     File found. Size: {} bytes", content.len());
-            println!("     [1/3] Lexing phase... DONE");
-            println!("     [2/3] Parsing phase... DONE");
-            println!("     [3/3] Compiling to Native... DONE");
-            println!("{}---> Build Successful (Simulated){}", COLOR_GREEN, COLOR_RESET);
+            
+            println!("     [1/3] Lexing phase...");
+            let mut lexer = Lexer::new(&content);
+            let tokens = lexer.tokenize();
+            println!("           Generated {} tokens.", tokens.len());
+
+            println!("     [2/3] Parsing phase (AST Generation)...");
+            let mut parser = Parser::new(tokens);
+            let ast = parser.parse();
+            
+            println!("{:#?}", ast); 
+
+            println!("     [3/3] Compiling to Native... [PENDING]");
+            println!("{}---> Build Successful (Partial){}", COLOR_GREEN, COLOR_RESET);
         },
         Err(_) => {
             println!("{}Error: Could not read file '{}'. Check the path.{}", COLOR_RED, filename, COLOR_RESET);

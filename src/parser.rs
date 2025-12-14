@@ -22,28 +22,13 @@ impl Parser {
             
             match token {
                 Token::EOF => break,
-                Token::Use => {
-                    statements.push(self.parse_capability());
-                },
-                Token::Lock => {
-                    statements.push(self.parse_var_decl(false, false));
-                },
-                Token::Stract => {
-                    statements.push(self.parse_var_decl(true, false));
-                },
-                Token::Vault => {
-                    statements.push(self.parse_var_decl(false, true));
-                },
-                Token::Func => {
-                    statements.push(self.parse_function());
-                },
-                Token::Module => {
-                    self.advance();
-                    self.advance();
-                },
-                _ => {
-                    self.advance();
-                }
+                Token::Use => { statements.push(self.parse_capability()); },
+                Token::Lock => { statements.push(self.parse_var_decl(false, false)); },
+                Token::Stract => { statements.push(self.parse_var_decl(true, false)); },
+                Token::Vault => { statements.push(self.parse_var_decl(false, true)); },
+                Token::Func => { statements.push(self.parse_function()); },
+                Token::Module => { self.advance(); self.advance(); },
+                _ => { self.advance(); }
             }
         }
 
@@ -51,84 +36,101 @@ impl Parser {
     }
 
     fn parse_capability(&mut self) -> Statement {
-        self.advance();
-        self.advance();
-        
+        self.advance(); self.advance();
         let service_name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "Unknown".to_string(),
         };
         self.advance();
-
         while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF {
             self.advance();
         }
         self.advance();
-
-        Statement::CapabilityUse {
-            service: service_name,
-            params: vec![],
-        }
+        Statement::CapabilityUse { service: service_name, params: vec![] }
     }
 
     fn parse_var_decl(&mut self, is_mutable: bool, is_secure: bool) -> Statement {
         self.advance();
-        
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "Unknown".to_string(),
         };
-        self.advance();
-
-        self.advance();
-
+        self.advance(); 
+        self.advance(); 
         let value = self.parse_expression();
-
-        Statement::VarDecl {
-            is_mutable,
-            is_secure,
-            name,
-            value,
-        }
+        Statement::VarDecl { is_mutable, is_secure, name, value }
     }
 
     fn parse_function(&mut self) -> Statement {
         self.advance();
-        
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "Anon".to_string(),
         };
         self.advance();
-
-        while self.current_token() != &Token::LeftBrace {
-            self.advance();
-        }
+        while self.current_token() != &Token::LeftBrace { self.advance(); }
         self.advance();
 
+        let body = self.parse_block();
+        Statement::FunctionDecl { name, body }
+    }
+
+    fn parse_block(&mut self) -> Vec<Statement> {
         let mut body = Vec::new();
         while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF {
             match self.current_token() {
                 Token::Stract | Token::Lock | Token::Vault => {
-                    let is_mut = match self.current_token() {
-                        Token::Stract => true,
-                        _ => false,
-                    };
-                    let is_sec = match self.current_token() {
-                        Token::Vault => true,
-                        _ => false,
-                    };
+                    let is_mut = matches!(self.current_token(), Token::Stract);
+                    let is_sec = matches!(self.current_token(), Token::Vault);
                     body.push(self.parse_var_decl(is_mut, is_sec));
                 }
+                Token::If => {
+                    body.push(self.parse_if_statement());
+                }
                 Token::Identifier(_) => {
-                    body.push(self.parse_func_call_stmt());
+                    // Decide se è assegnazione (balance = ...) o funzione (IO.print)
+                    if self.peek() == &Token::Equal {
+                        body.push(self.parse_assignment());
+                    } else {
+                        body.push(self.parse_func_call_stmt());
+                    }
                 }
                 _ => { self.advance(); }
             }
         }
         self.advance();
+        body
+    }
 
-        Statement::FunctionDecl { name, body }
+    fn parse_assignment(&mut self) -> Statement {
+        let name = match self.current_token() {
+            Token::Identifier(s) => s.clone(),
+            _ => "Unknown".to_string(),
+        };
+        self.advance(); // Salta nome
+        self.advance(); // Salta '='
+        let value = self.parse_expression();
+        Statement::Assignment { name, value }
+    }
+
+    fn parse_if_statement(&mut self) -> Statement {
+        self.advance(); 
+        let condition = self.parse_expression();
+        
+        while self.current_token() != &Token::LeftBrace { self.advance(); }
+        self.advance(); 
+        
+        let then_branch = self.parse_block();
+        
+        let mut else_branch = None;
+        if self.current_token() == &Token::Else {
+            self.advance(); 
+            while self.current_token() != &Token::LeftBrace { self.advance(); }
+            self.advance(); 
+            else_branch = Some(self.parse_block());
+        }
+
+        Statement::IfStatement { condition, then_branch, else_branch }
     }
 
     fn parse_func_call_stmt(&mut self) -> Statement {
@@ -136,15 +138,12 @@ impl Parser {
             Token::Identifier(s) => s.clone(),
             _ => "".to_string(),
         };
-        self.advance();
-        self.advance();
+        self.advance(); self.advance();
         let method = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "".to_string(),
         };
-        self.advance();
-        
-        self.advance();
+        self.advance(); self.advance();
 
         let mut args = Vec::new();
         if self.current_token() != &Token::RightParen {
@@ -154,7 +153,6 @@ impl Parser {
                 args.push(self.parse_expression());
             }
         }
-
         self.advance();
 
         Statement::Expr(Expression::FunctionCall {
@@ -164,55 +162,76 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Expression {
-        let mut left = self.parse_primary();
+        let mut left = self.parse_term();
 
-        while self.current_token() == &Token::Plus {
+        while matches!(self.current_token(), Token::Plus | Token::Minus | Token::EqualEqual | Token::Greater | Token::Less) {
+            let operator = match self.current_token() {
+                Token::Plus => "+".to_string(),
+                Token::Minus => "-".to_string(),
+                Token::EqualEqual => "==".to_string(),
+                Token::Greater => ">".to_string(),
+                Token::Less => "<".to_string(),
+                _ => "".to_string(),
+            };
+            self.advance();
+            let right = self.parse_term();
+            left = Expression::BinaryOp {
+                left: Box::new(left),
+                operator,
+                right: Box::new(right),
+            };
+        }
+        left
+    }
+
+    fn parse_term(&mut self) -> Expression {
+        let mut left = self.parse_primary();
+        while matches!(self.current_token(), Token::Star | Token::Slash) {
+            let operator = match self.current_token() {
+                Token::Star => "*".to_string(),
+                Token::Slash => "/".to_string(),
+                _ => "".to_string(),
+            };
             self.advance();
             let right = self.parse_primary();
             left = Expression::BinaryOp {
                 left: Box::new(left),
-                operator: "+".to_string(),
+                operator,
                 right: Box::new(right),
             };
         }
-
         left
     }
 
     fn parse_primary(&mut self) -> Expression {
         match self.current_token() {
             Token::StringLiteral(s) => {
-                let val = s.clone();
-                self.advance();
+                let val = s.clone(); self.advance();
                 Expression::LiteralStr(val)
             }
             Token::Number(n) => {
-                let val = *n;
-                self.advance();
+                let val = *n; self.advance();
                 Expression::LiteralNum(val)
             }
             Token::Identifier(s) => {
-                let val = s.clone();
-                self.advance();
+                let val = s.clone(); self.advance();
                 Expression::Variable(val)
             }
-            _ => {
-                self.advance();
-                Expression::LiteralStr("".to_string())
-            }
+            _ => { self.advance(); Expression::LiteralStr("".to_string()) }
         }
     }
 
     fn advance(&mut self) {
-        if self.position < self.tokens.len() {
-            self.position += 1;
-        }
+        if self.position < self.tokens.len() { self.position += 1; }
     }
 
     fn current_token(&self) -> &Token {
-        if self.position >= self.tokens.len() {
-            return &Token::EOF;
-        }
+        if self.position >= self.tokens.len() { return &Token::EOF; }
         &self.tokens[self.position]
+    }
+    
+    fn peek(&self) -> &Token {
+        if self.position + 1 >= self.tokens.len() { return &Token::EOF; }
+        &self.tokens[self.position + 1]
     }
 }

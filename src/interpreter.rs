@@ -14,9 +14,8 @@ impl Interpreter {
 
     pub fn run(&mut self, program: Program) {
         for stmt in &program.statements {
-            if let Statement::VarDecl { name, value, .. } = stmt {
-                let val = self.eval_expression(value);
-                self.variables.insert(name.clone(), val);
+            if let Statement::VarDecl { .. } = stmt {
+                self.execute_statement(stmt);
             }
         }
 
@@ -35,6 +34,23 @@ impl Interpreter {
                 let val = self.eval_expression(value);
                 self.variables.insert(name.clone(), val);
             }
+            Statement::Assignment { name, value } => {
+                let val = self.eval_expression(value);
+                // Aggiorna solo se esiste
+                if self.variables.contains_key(name) {
+                    self.variables.insert(name.clone(), val);
+                } else {
+                    println!("Error: Variable '{}' not declared before assignment.", name);
+                }
+            }
+            Statement::IfStatement { condition, then_branch, else_branch } => {
+                let cond_val = self.eval_expression(condition);
+                if cond_val == "true" {
+                    for s in then_branch { self.execute_statement(s); }
+                } else if let Some(else_stmts) = else_branch {
+                    for s in else_stmts { self.execute_statement(s); }
+                }
+            }
             Statement::Expr(expr) => {
                 self.eval_expression(expr);
             }
@@ -45,16 +61,36 @@ impl Interpreter {
     fn eval_expression(&mut self, expr: &Expression) -> String {
         match expr {
             Expression::LiteralStr(s) => s.clone(),
+            Expression::LiteralNum(n) => n.to_string(),
             Expression::Variable(name) => {
                 self.variables.get(name).cloned().unwrap_or_else(|| "undefined".to_string())
             }
             Expression::BinaryOp { left, operator, right } => {
-                let left_val = self.eval_expression(left);
-                let right_val = self.eval_expression(right);
-                if operator == "+" {
-                    format!("{}{}", left_val, right_val)
+                let l_val = self.eval_expression(left);
+                let r_val = self.eval_expression(right);
+                
+                let l_num = l_val.parse::<f64>();
+                let r_num = r_val.parse::<f64>();
+
+                if let (Ok(l), Ok(r)) = (l_num, r_num) {
+                    match operator.as_str() {
+                        "+" => (l + r).to_string(),
+                        "-" => (l - r).to_string(),
+                        "*" => (l * r).to_string(),
+                        "/" => (l / r).to_string(),
+                        ">" => (l > r).to_string(),
+                        "<" => (l < r).to_string(),
+                        "==" => (l == r).to_string(),
+                        _ => "0".to_string(),
+                    }
                 } else {
-                    String::new()
+                    if operator == "+" {
+                        format!("{}{}", l_val, r_val)
+                    } else if operator == "==" {
+                         (l_val == r_val).to_string()
+                    } else {
+                        "NaN".to_string()
+                    }
                 }
             }
             Expression::FunctionCall { target, args } => {
@@ -64,7 +100,6 @@ impl Interpreter {
                 }
                 String::new()
             }
-            _ => String::new(),
         }
     }
 }

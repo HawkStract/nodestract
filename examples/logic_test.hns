@@ -1,0 +1,21 @@
+use capability IO { target: "stdout" }
+
+module LogicTest
+
+func main() {
+    stract balance = 1000
+    stract amount = 500
+
+    IO.print("Conto attuale:", balance)
+    
+    if amount < balance {
+        balance = balance - amount
+        IO.print("Pagamento accettato. Nuovo saldo:", balance)
+    } else {
+        IO.print("Errore: Fondi insufficienti")
+    }
+
+    if balance == 500 {
+        IO.print("CHECK: Il saldo è corretto.")
+    }
+}

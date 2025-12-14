@@ -7,6 +7,15 @@ pub enum Statement {
         name: String,
         value: Expression,
     },
+    Assignment {
+        name: String,
+        value: Expression,
+    },
+    IfStatement {
+        condition: Expression,
+        then_branch: Vec<Statement>,
+        else_branch: Option<Vec<Statement>>,
+    },
     CapabilityUse {
         service: String,
         params: Vec<(String, String)>,

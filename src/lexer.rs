@@ -8,6 +8,8 @@ pub enum Token {
     Use,
     Module,
     Func,
+    If,
+    Else,
     Identifier(String),
     StringLiteral(String),
     Number(f64),
@@ -16,7 +18,13 @@ pub enum Token {
     LeftParen,
     RightParen,
     Equal,
+    EqualEqual,
+    Greater,
+    Less,
     Plus,
+    Minus,
+    Star,
+    Slash,
     Dot,
     Comma,
     EOF,
@@ -50,22 +58,34 @@ impl Lexer {
                 '}' => { tokens.push(Token::RightBrace); self.position += 1; }
                 '(' => { tokens.push(Token::LeftParen); self.position += 1; }
                 ')' => { tokens.push(Token::RightParen); self.position += 1; }
-                '=' => { tokens.push(Token::Equal); self.position += 1; }
-                '+' => { tokens.push(Token::Plus); self.position += 1; }
                 '.' => { tokens.push(Token::Dot); self.position += 1; }
                 ',' => { tokens.push(Token::Comma); self.position += 1; }
-                '"' => {
-                    tokens.push(self.read_string());
-                }
+                '+' => { tokens.push(Token::Plus); self.position += 1; }
+                '-' => { tokens.push(Token::Minus); self.position += 1; }
+                '*' => { tokens.push(Token::Star); self.position += 1; }
                 '/' => {
                     if self.peek_next() == '*' {
                         self.skip_multiline_comment();
                     } else if self.peek_next() == '/' {
                         self.skip_comment();
                     } else {
-                         tokens.push(Token::Unknown('/'));
-                         self.position += 1;
+                        tokens.push(Token::Slash);
+                        self.position += 1;
                     }
+                }
+                '=' => {
+                    if self.peek_next() == '=' {
+                        self.position += 2;
+                        tokens.push(Token::EqualEqual);
+                    } else {
+                        tokens.push(Token::Equal);
+                        self.position += 1;
+                    }
+                }
+                '>' => { tokens.push(Token::Greater); self.position += 1; }
+                '<' => { tokens.push(Token::Less); self.position += 1; }
+                '"' => {
+                    tokens.push(self.read_string());
                 }
                 _ if char.is_alphabetic() => {
                     tokens.push(self.read_identifier());
@@ -99,6 +119,8 @@ impl Lexer {
             "use" => Token::Use,
             "module" => Token::Module,
             "func" => Token::Func,
+            "if" => Token::If,
+            "else" => Token::Else,
             _ => Token::Identifier(text),
         }
     }

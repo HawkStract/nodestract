@@ -36,15 +36,17 @@ impl Interpreter {
         self.scopes.last_mut().unwrap()
     }
 
+    fn enter_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    fn exit_scope(&mut self) {
+        self.scopes.pop();
+    }
+
     fn get_var(&self, name: &str) -> Value {
         for scope in self.scopes.iter().rev() {
             if let Some(entry) = scope.get(name) {
-                if let Value::String(s) = &entry.value {
-                    if s.starts_with("ENC:") {
-                        let decrypted = Self::decrypt_vault(s);
-                        return Value::String(decrypted);
-                    }
-                }
                 return entry.value.clone();
             }
         }
@@ -56,11 +58,11 @@ impl Interpreter {
             if let Some(entry) = scope.get_mut(&name) {
                 if !entry.is_mutable {
                     println!("Runtime Error: Cannot assign to lock (constant) '{}'.", name);
-                    return; 
+                    return;
                 }
 
                 let final_val = if entry.is_secure {
-                    let s = value.to_string(); 
+                    let s = value.to_string();
                     let enc = Self::encrypt_vault(&s);
                     Value::String(enc)
                 } else {
@@ -76,19 +78,42 @@ impl Interpreter {
 
     fn define_var(&mut self, name: String, value: Value, is_mutable: bool, is_secure: bool) {
         let final_val = if is_secure {
-            let s = value.to_string();
+            // Se stiamo copiando da un altro vault (che è già ENC:...), dobbiamo
+            // decifrare il valore originale e ri-cifrarlo con un NUOVO nonce.
+            let s = if let Value::String(ref enc_str) = value {
+                if enc_str.starts_with("ENC:") {
+                    Self::decrypt_vault(enc_str)
+                } else {
+                    value.to_string()
+                }
+            } else {
+                value.to_string()
+            };
+            
             let enc = Self::encrypt_vault(&s);
             Value::String(enc)
         } else {
-            value
+            // Se assegniamo un vault a una variabile normale, decifriamo automaticamente
+            if let Value::String(ref enc_str) = value {
+                if enc_str.starts_with("ENC:") {
+                    let decrypted = Self::decrypt_vault(enc_str);
+                    if let Ok(i) = decrypted.parse::<i64>() { Value::Integer(i) }
+                    else if let Ok(f) = decrypted.parse::<f64>() { Value::Float(f) }
+                    else { Value::String(decrypted) }
+                } else {
+                    value
+                }
+            } else {
+                value
+            }
         };
-        
+
         let entry = VarEntry {
             value: final_val,
             is_mutable,
             is_secure,
         };
-        
+
         self.current_scope().insert(name, entry);
     }
 
@@ -105,7 +130,7 @@ impl Interpreter {
     fn encrypt_vault(val: &str) -> String {
         let key = Self::get_key();
         let cipher = Aes256Gcm::new(&key.into());
-        
+
         let mut nonce_bytes = [0u8; 12];
         let mut rng = rand::thread_rng();
         rng.fill_bytes(&mut nonce_bytes);
@@ -135,13 +160,25 @@ impl Interpreter {
         let ciphertext = hex::decode(cipher_hex).unwrap_or_default();
 
         if nonce_bytes.len() != 12 { return "ERROR_NONCE".to_string(); }
-        
+
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         match cipher.decrypt(nonce, ciphertext.as_ref()) {
             Ok(plaintext) => String::from_utf8(plaintext).unwrap_or_else(|_| "ERROR_UTF8".to_string()),
             Err(_) => "ERROR_DECRYPT".to_string()
         }
+    }
+
+    fn resolve_value(&self, val: Value) -> Value {
+        if let Value::String(ref s) = val {
+            if s.starts_with("ENC:") {
+                let decrypted = Self::decrypt_vault(s);
+                if let Ok(i) = decrypted.parse::<i64>() { return Value::Integer(i); }
+                if let Ok(f) = decrypted.parse::<f64>() { return Value::Float(f); }
+                return Value::String(decrypted);
+            }
+        }
+        val
     }
 
     pub fn run(&mut self, program: Program) {
@@ -184,24 +221,41 @@ impl Interpreter {
                 self.set_var(name.clone(), val);
             }
             Statement::IfStatement { condition, then_branch, else_branch } => {
-                let cond_val = self.eval_expression(condition);
+                let raw_cond = self.eval_expression(condition);
+                let cond_val = self.resolve_value(raw_cond);
+                
                 if cond_val.is_truthy() {
+                    self.enter_scope();
                     for s in then_branch { self.execute_statement(s); }
+                    self.exit_scope();
                 } else if let Some(else_stmts) = else_branch {
+                    self.enter_scope();
                     for s in else_stmts { self.execute_statement(s); }
+                    self.exit_scope();
                 }
             }
             Statement::WhileStatement { condition, body } => {
-                while self.eval_expression(condition).is_truthy() {
+                loop {
+                    let raw_cond = self.eval_expression(condition);
+                    let cond_val = self.resolve_value(raw_cond);
+                    if !cond_val.is_truthy() { break; }
+                    
+                    self.enter_scope();
                     for s in body {
                         self.execute_statement(s);
-                        if self.last_return.is_some() { return; }
+                        if self.last_return.is_some() { 
+                            self.exit_scope(); 
+                            return; 
+                        }
                     }
+                    self.exit_scope();
                 }
             }
             Statement::ForStatement { iterator, start, end, body } => {
-                let start_val = self.eval_expression(start);
-                let end_val = self.eval_expression(end);
+                let raw_start = self.eval_expression(start);
+                let start_val = self.resolve_value(raw_start);
+                let raw_end = self.eval_expression(end);
+                let end_val = self.resolve_value(raw_end);
 
                 let start_int = match start_val {
                     Value::Integer(i) => i,
@@ -215,11 +269,16 @@ impl Interpreter {
                 };
 
                 for i in start_int..end_int {
+                    self.enter_scope();
                     self.define_var(iterator.clone(), Value::Integer(i), false, false);
                     for s in body {
                         self.execute_statement(s);
-                        if self.last_return.is_some() { return; }
+                        if self.last_return.is_some() { 
+                            self.exit_scope();
+                            return; 
+                        }
                     }
+                    self.exit_scope();
                 }
             }
             Statement::ReturnStatement { value } => {
@@ -257,7 +316,8 @@ impl Interpreter {
             Expression::Variable(name) => self.get_var(name),
             Expression::Index { target, index } => {
                 let target_val = self.eval_expression(target);
-                let index_val = self.eval_expression(index);
+                let raw_index = self.eval_expression(index);
+                let index_val = self.resolve_value(raw_index);
 
                 match target_val {
                     Value::Array(arr) => {
@@ -290,7 +350,10 @@ impl Interpreter {
     }
 
     fn eval_binary_op(&self, left: Value, operator: &str, right: Value) -> Value {
-        match (left, right) {
+        let l_res = self.resolve_value(left);
+        let r_res = self.resolve_value(right);
+
+        match (l_res, r_res) {
             (Value::Integer(a), Value::Integer(b)) => match operator {
                 "+" => Value::Integer(a + b),
                 "-" => Value::Integer(a - b),
@@ -298,7 +361,12 @@ impl Interpreter {
                 "/" => Value::Integer(a / b),
                 ">" => Value::Boolean(a > b),
                 "<" => Value::Boolean(a < b),
+                ">=" => Value::Boolean(a >= b),
+                "<=" => Value::Boolean(a <= b),
                 "==" => Value::Boolean(a == b),
+                "!=" => Value::Boolean(a != b),
+                "&&" => Value::Boolean(a != 0 && b != 0),
+                "||" => Value::Boolean(a != 0 || b != 0),
                 _ => Value::Null,
             },
             (Value::Float(a), Value::Float(b)) => match operator {
@@ -308,7 +376,17 @@ impl Interpreter {
                 "/" => Value::Float(a / b),
                 ">" => Value::Boolean(a > b),
                 "<" => Value::Boolean(a < b),
+                ">=" => Value::Boolean(a >= b),
+                "<=" => Value::Boolean(a <= b),
                 "==" => Value::Boolean(a == b),
+                "!=" => Value::Boolean(a != b),
+                _ => Value::Null,
+            },
+            (Value::Boolean(a), Value::Boolean(b)) => match operator {
+                "&&" => Value::Boolean(a && b),
+                "||" => Value::Boolean(a || b),
+                "==" => Value::Boolean(a == b),
+                "!=" => Value::Boolean(a != b),
                 _ => Value::Null,
             },
             (Value::Integer(a), Value::Float(b)) => self.eval_binary_op(Value::Float(a as f64), operator, Value::Float(b)),
@@ -317,6 +395,7 @@ impl Interpreter {
             (Value::String(a), Value::String(b)) => match operator {
                 "+" => Value::String(a + &b),
                 "==" => Value::Boolean(a == b),
+                "!=" => Value::Boolean(a != b),
                 _ => Value::Null,
             },
             (Value::String(a), b) => match operator {
@@ -351,7 +430,9 @@ impl Interpreter {
                 },
                 "IO.input" => {
                     if let Some(prompt_expr) = args.get(0) {
-                        print!("{}", self.eval_expression(prompt_expr));
+                        let raw_prompt = self.eval_expression(prompt_expr);
+                        let p = self.resolve_value(raw_prompt);
+                        print!("{}", p);
                         io::stdout().flush().unwrap();
                     }
                     let mut buffer = String::new();
@@ -380,8 +461,17 @@ impl Interpreter {
                 },
                 "Sys.memory_dump" => {
                     if let Some(Expression::Variable(var_name)) = args.get(0) {
-                        let val = self.get_var(var_name);
-                        println!("[RAM DUMP] Variable '{}' -> {:?}", var_name, val);
+                        let mut found = false;
+                        for scope in self.scopes.iter().rev() {
+                            if let Some(entry) = scope.get(var_name) {
+                                println!("[RAM DUMP] Variable '{}' -> {:?}", var_name, entry.value);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if !found {
+                            println!("[RAM DUMP] Variable '{}' -> <Not Found>", var_name);
+                        }
                     }
                     return Value::Null;
                 }

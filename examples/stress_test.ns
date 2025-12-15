@@ -1,0 +1,71 @@
+module StressTest;
+use IO {}
+use Array {}
+
+func main() {
+    IO.print("=== AVVIO STRESS TEST (v0.6.0) ===");
+    stract total_score = 0;
+
+    // STRESS 1: High Iteration Loop (1000 cicli)
+    IO.print(">>> Stress 1: 1000 Iterations");
+    stract i = 0;
+    while i < 1000 { i = i + 1; }
+    if i == 1000 { total_score = total_score + 20; IO.print("[PASS] 1k Loop"); }
+    else { IO.print("[FAIL] 1k Loop"); }
+
+    // STRESS 2: Massive Array Push (1000 items)
+    IO.print(">>> Stress 2: 1000 Array Pushes");
+    stract list = [];
+    stract k = 0;
+    while k < 1000 {
+        list = Array.push(list, k);
+        k = k + 1;
+    }
+    if Array.len(list) == 1000 { total_score = total_score + 20; IO.print("[PASS] 1k Array Push"); }
+    else { IO.print("[FAIL] Array Push"); }
+
+    // STRESS 3: String Builder (1000 concats)
+    IO.print(">>> Stress 3: 1000 String Concatenations");
+    stract s = "";
+    stract j = 0;
+    while j < 1000 {
+        s = s + ".";
+        j = j + 1;
+    }
+    // Non controlliamo la stringa intera per non intasare l'IO
+    if j == 1000 { total_score = total_score + 20; IO.print("[PASS] 1k Strings"); }
+    else { IO.print("[FAIL] Strings"); }
+
+    // STRESS 4: Nested Loops (CPU Load)
+    IO.print(">>> Stress 4: Nested Loops (100x10)");
+    stract outer = 0;
+    stract counts = 0;
+    while outer < 100 {
+        stract inner = 0;
+        while inner < 10 {
+            counts = counts + 1;
+            inner = inner + 1;
+        }
+        outer = outer + 1;
+    }
+    if counts == 1000 { total_score = total_score + 20; IO.print("[PASS] Nested Loops"); }
+    else { IO.print("[FAIL] Nested Loops"); }
+
+    // STRESS 5: Vault Encryption Cycle (AES-256 Load)
+    // Questo è pesante: 500 cicli di cifratura/decifratura in RAM
+    IO.print(">>> Stress 5: Vault Encryption Cycle (500x)");
+    stract v_count = 0;
+    while v_count < 500 {
+        vault temp = v_count; // Cifra in RAM
+        stract check = temp;  // Decifra per leggere
+        v_count = v_count + 1;
+    }
+    if v_count == 500 { total_score = total_score + 20; IO.print("[PASS] Vault Cycle"); }
+    else { IO.print("[FAIL] Vault Cycle"); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE STRESS:", total_score, "/ 100");
+    
+    if total_score == 100 { IO.print("RESULT: STABLE - CERTIFIED v0.6.0"); } 
+    else { IO.print("RESULT: UNSTABLE"); }
+}

@@ -1,0 +1,62 @@
+module LogicTest;
+use IO {}
+
+func main() {
+    IO.print("=== AVVIO LOGIC TEST (Target: 100/100) ===");
+    stract score = 0;
+    stract a = 10;
+    stract b = 20;
+
+    // Test 1: If Else (10pt)
+    if a > b { IO.print("Fail 1"); } 
+    else { score = score + 10; IO.print("[PASS] 1. If Else basilare"); }
+
+    // Test 2: Comparison Equality (10pt)
+    if a == 10 { score = score + 10; IO.print("[PASS] 2. Uguaglianza"); }
+    else { IO.print("[FAIL] 2. Uguaglianza"); }
+
+    // Test 3: Comparison Not Equal (10pt)
+    if a != 20 { score = score + 10; IO.print("[PASS] 3. Disuguaglianza (!=)"); }
+    else { IO.print("[FAIL] 3. Disuguaglianza"); }
+
+    // Test 4: Logical AND (10pt)
+    if a == 10 && b == 20 { score = score + 10; IO.print("[PASS] 4. Operatore AND (&&)"); }
+    else { IO.print("[FAIL] 4. Operatore AND"); }
+
+    // Test 5: Logical OR (10pt)
+    if a == 99 || b == 20 { score = score + 10; IO.print("[PASS] 5. Operatore OR (||)"); }
+    else { IO.print("[FAIL] 5. Operatore OR"); }
+
+    // Test 6: Precedenza AND su OR (10pt) -> (false && false) || true
+    if a == 99 && b == 99 || a == 10 { score = score + 10; IO.print("[PASS] 6. Precedenza && su ||"); }
+    else { IO.print("[FAIL] 6. Precedenza Logica"); }
+
+    // Test 7: Nested Logic (10pt)
+    stract nested = 0;
+    if a == 10 {
+        if b == 20 {
+            nested = 1;
+        }
+    }
+    if nested == 1 { score = score + 10; IO.print("[PASS] 7. Nested If"); }
+    else { IO.print("[FAIL] 7. Nested If"); }
+
+    // Test 8: While Loop (10pt)
+    stract i = 0;
+    while i < 10 { i = i + 1; }
+    if i == 10 { score = score + 10; IO.print("[PASS] 8. While Loop"); }
+    else { IO.print("[FAIL] 8. While Loop"); }
+
+    // Test 9: For Loop (10pt)
+    stract k = 0;
+    for x 0 10 { k = k + 1; }
+    if k == 10 { score = score + 10; IO.print("[PASS] 9. For Loop"); }
+    else { IO.print("[FAIL] 9. For Loop"); }
+
+    // Test 10: Greater/Less Equal (10pt)
+    if a >= 10 && b <= 20 { score = score + 10; IO.print("[PASS] 10. Operatori >= <="); }
+    else { IO.print("[FAIL] 10. Operatori >= <="); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE LOGICA:", score, "/ 100");
+}

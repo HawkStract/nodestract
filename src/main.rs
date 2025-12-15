@@ -30,7 +30,7 @@ fn main() {
     match command.as_str() {
         "build" => {
             if args.len() < 3 {
-                println!("{}Error: Missing filename. Usage: nsc build <filename.hns>{}", COLOR_RED, COLOR_RESET);
+                println!("{}Error: Missing filename. Usage: nsc build <filename.ns>{}", COLOR_RED, COLOR_RESET);
                 process::exit(1);
             }
             let filename = &args[2];
@@ -48,9 +48,9 @@ fn main() {
 
 fn print_banner() {
     println!("{}
-    _   _           _        ____  _                  _   
-   | \\ | | ___  ___| | ___  / ___|| |_ _ __ __ _  ___| |_ 
-   |  \\| |/ _ \\/  _` |/ _ \\ \\___ \\| __| '__/ _` |/ __| __|
+    _   _          _        ____  _                  _   
+   | \\ | | ___  __| | ___  / ___|| |_ _ __ __ _  ___| |_ 
+   |  \\| |/ _ \\/ _` |/ _ \\ \\___ \\| __| '__/ _` |/ __| __|
    | |\\  | (_) \\ (_| |  __/  ___) | |_| | | (_| | (__| |_ 
    |_| \\_|\\___/ \\__,_|\\___| |____/ \\__|_|  \\__,_|\\___|\\__|
    
@@ -60,7 +60,7 @@ fn print_banner() {
 
 fn print_usage() {
     println!("Usage:");
-    println!("  nsc build <file.hns>   Compile a Node Stract file");
+    println!("  nsc build <file.ns>    Compile a Node Stract file");
     println!("  nsc version            Show version info");
 }
 

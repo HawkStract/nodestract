@@ -13,7 +13,7 @@ impl Parser {
                 Token::EOF => break,
                 Token::Use => statements.push(self.parse_capability()),
                 Token::Lock | Token::Stract | Token::Vault => {
-                    let is_mut = matches!(token, Token::Stract);
+                    let is_mut = matches!(token, Token::Stract | Token::Vault); 
                     let is_sec = matches!(token, Token::Vault);
                     statements.push(self.parse_var_decl(is_mut, is_sec));
                 },
@@ -88,7 +88,7 @@ impl Parser {
         while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF {
             match self.current_token() {
                 Token::Stract | Token::Lock | Token::Vault => {
-                    let is_mut = matches!(self.current_token(), Token::Stract);
+                    let is_mut = matches!(self.current_token(), Token::Stract | Token::Vault);
                     let is_sec = matches!(self.current_token(), Token::Vault);
                     body.push(self.parse_var_decl(is_mut, is_sec));
                 },

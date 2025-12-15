@@ -1,0 +1,66 @@
+module DataTest;
+use IO {}
+use Array {}
+
+func main() {
+    IO.print("=== AVVIO DATA STRUCTURE TEST (v0.6.0) ===");
+    stract score = 0;
+
+    // Test 1: Array Semplice (10pt)
+    stract list = [10, 20, 30];
+    if list[1] == 20 { score = score + 10; IO.print("[PASS] 1. Lettura Array"); }
+    else { IO.print("[FAIL] 1. Lettura Array"); }
+
+    // Test 2: Array Push (10pt)
+    list = Array.push(list, 40);
+    if list[3] == 40 { score = score + 10; IO.print("[PASS] 2. Array Push"); }
+    else { IO.print("[FAIL] 2. Array Push"); }
+
+    // Test 3: Array Len (10pt)
+    if Array.len(list) == 4 { score = score + 10; IO.print("[PASS] 3. Array Len"); }
+    else { IO.print("[FAIL] 3. Array Len"); }
+
+    // Test 4: Mappa Base (10pt)
+    stract user = { "name": "Hawk", "role": "Admin" };
+    if user["role"] == "Admin" { score = score + 10; IO.print("[PASS] 4. Mappa Base"); }
+    else { IO.print("[FAIL] 4. Mappa Base"); }
+
+    // Test 5: Mappa Nidificata (Array in Mappa) (10pt)
+    stract config = { "ids": [100, 200] };
+    stract ids = config["ids"];
+    if ids[1] == 200 { score = score + 10; IO.print("[PASS] 5. Array in Mappa"); }
+    else { IO.print("[FAIL] 5. Array in Mappa"); }
+
+    // Test 6: Mappa in Array (10pt)
+    stract complex_list = [ { "id": 1 }, { "id": 2 } ];
+    stract item = complex_list[1];
+    if item["id"] == 2 { score = score + 10; IO.print("[PASS] 6. Mappa in Array"); }
+    else { IO.print("[FAIL] 6. Mappa in Array"); }
+
+    // Test 7: Tipi Misti in Array (10pt)
+    stract mixed = [1, "Text", 3.5];
+    if mixed[1] == "Text" { score = score + 10; IO.print("[PASS] 7. Tipi Misti"); }
+    else { IO.print("[FAIL] 7. Tipi Misti"); }
+
+    // Test 8: Modifica Map Value (tramite riassegnazione) (10pt)
+    stract settings = { "vol": 50 };
+    settings = { "vol": 100 };
+    if settings["vol"] == 100 { score = score + 10; IO.print("[PASS] 8. Modifica Struttura"); }
+    else { IO.print("[FAIL] 8. Modifica Struttura"); }
+
+    // Test 9: Accesso Indice Calcolato (10pt)
+    stract idx = 2;
+    stract vec = [10, 20, 30, 40];
+    if vec[idx] == 30 { score = score + 10; IO.print("[PASS] 9. Indice Dinamico"); }
+    else { IO.print("[FAIL] 9. Indice Dinamico"); }
+
+    // Test 10: Deep Nesting (10pt)
+    stract deep = { "data": { "raw": [999] } };
+    stract l1 = deep["data"];
+    stract l2 = l1["raw"];
+    if l2[0] == 999 { score = score + 10; IO.print("[PASS] 10. Deep Nesting"); }
+    else { IO.print("[FAIL] 10. Deep Nesting"); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE DATA:", score, "/ 100");
+}

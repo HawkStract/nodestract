@@ -1,0 +1,10 @@
+{
+  "iconDefinitions": {
+    "ns_logo": {
+      "iconPath": "./logo.svg"
+    }
+  },
+  "fileExtensions": {
+    "ns": "ns_logo"
+  }
+}

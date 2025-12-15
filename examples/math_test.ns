@@ -1,0 +1,63 @@
+module MathTest;
+use IO {}
+
+func main() {
+    IO.print("=== AVVIO MATH TEST (Target: 100/100) ===");
+    stract score = 0;
+
+    // Base Types
+    stract i = 10;
+    stract f = 2.5;
+    lock c = 5;
+    vault s = 100;
+
+    // 1-5: Base Integer Ops
+    if 10 + 5 == 15 { score = score + 5; } else { IO.print("Fail 1"); }
+    if 10 - 5 == 5 { score = score + 5; } else { IO.print("Fail 2"); }
+    if 10 * 2 == 20 { score = score + 5; } else { IO.print("Fail 3"); }
+    if 20 / 2 == 10 { score = score + 5; } else { IO.print("Fail 4"); }
+    if 10 + 5 * 2 == 20 { score = score + 5; IO.print("[PASS] 1-5 Basic Int & Prec"); } else { IO.print("Fail 5"); }
+
+    // 6-10: Float & Mixing
+    if 2.5 + 2.5 == 5.0 { score = score + 5; } else { IO.print("Fail 6"); }
+    if 5.0 - 2.0 == 3.0 { score = score + 5; } else { IO.print("Fail 7"); }
+    if 10 + 2.5 == 12.5 { score = score + 5; } else { IO.print("Fail 8"); }
+    if 10.5 - 5 == 5.5 { score = score + 5; } else { IO.print("Fail 9"); }
+    if 10.0 / 2.0 == 5.0 { score = score + 5; IO.print("[PASS] 6-10 Floats"); } else { IO.print("Fail 10"); }
+
+    // 11-15: Advanced & Vaults
+    // 0 - 10 parserizza come unary minus translation
+    stract neg = 0 - 10; 
+    if neg == -10 { score = score + 5; } else { IO.print("Fail 11"); }
+    
+    if -5 + 10 == 5 { score = score + 5; } else { IO.print("Fail 12"); }
+    
+    // Vault + Stract (Auto Decrypt)
+    if s + 1 == 101 { score = score + 5; } else { IO.print("Fail 13"); }
+    
+    // Vault + Lock
+    if s + c == 105 { score = score + 5; } else { IO.print("Fail 14"); }
+    
+    // Lock + Stract
+    if c + i == 15 { score = score + 5; IO.print("[PASS] 11-15 Advanced & Vaults"); } else { IO.print("Fail 15"); }
+
+    // 16-20: Strings & Zero
+    if 100 * 0 == 0 { score = score + 5; } else { IO.print("Fail 16"); }
+    
+    // String concatenation
+    stract s1 = "Node";
+    stract s2 = "Stract";
+    if s1 + s2 == "NodeStract" { score = score + 5; } else { IO.print("Fail 17"); }
+    
+    // String + Num
+    if "Ver" + 0.6 == "Ver0.6" { score = score + 5; } else { IO.print("Fail 18"); }
+    
+    // Num + String
+    if 10 + "pt" == "10pt" { score = score + 5; } else { IO.print("Fail 19"); }
+    
+    // Identity
+    if s * 1 == 100 { score = score + 5; IO.print("[PASS] 16-20 Strings & Identity"); } else { IO.print("Fail 20"); }
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE MATEMATICA:", score, "/ 100");
+}

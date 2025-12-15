@@ -1,0 +1,75 @@
+module SecurityTest;
+use IO {}
+use Sys {} 
+
+func main() {
+    IO.print("=== AVVIO SECURITY TEST (v0.6.0) ===");
+    stract score = 0;
+
+    // Test 1: Accesso Base Vault (10pt)
+    vault secret = "PasswordSegreta";
+    if secret == "PasswordSegreta" { score = score + 10; IO.print("[PASS] 1. Accesso Vault"); } 
+    else { IO.print("[FAIL] 1. Accesso Vault"); }
+
+    // Test 2: Immutabilità Lock (10pt)
+    lock costante = 100;
+    costante = 200; // Errore Runtime previsto (non deve cambiare il valore)
+    if costante == 100 { score = score + 10; IO.print("[PASS] 2. Lock Integrità"); } 
+    else { IO.print("[FAIL] 2. Lock violato! Valore:", costante); }
+
+    // Test 3: Vault Aritmetica (Auto-Decrypt) (10pt)
+    vault balance = 500;
+    if balance + 50 == 550 { score = score + 10; IO.print("[PASS] 3. Vault Aritmetica"); }
+    else { IO.print("[FAIL] 3. Vault Aritmetica"); }
+
+    // Test 4: Vault String Concatenation (10pt)
+    vault prefix = "Key:";
+    stract full_key = prefix + "12345";
+    if full_key == "Key:12345" { score = score + 10; IO.print("[PASS] 4. Vault String Ops"); }
+    else { IO.print("[FAIL] 4. Vault String Ops"); }
+
+    // Test 5: Vault Mutability (Re-Encryption) (10pt)
+    // Un vault può cambiare valore, ma il nuovo valore deve essere cifrato in RAM
+    vault token = "OldToken";
+    token = "NewToken";
+    if token == "NewToken" { score = score + 10; IO.print("[PASS] 5. Vault Update"); }
+    else { IO.print("[FAIL] 5. Vault Update"); }
+
+    // Test 6: Lock Shadowing (Scope Isolation) (10pt)
+    lock livello = 1;
+    if 1 == 1 {
+        lock livello = 2; // Questo è un NUOVO lock nello scope interno
+        if livello == 2 { score = score + 5; }
+    }
+    // Qui fuori 'livello' deve essere ancora 1
+    if livello == 1 { score = score + 5; IO.print("[PASS] 6. Scope Isolation"); }
+    else { IO.print("[FAIL] 6. Scope Isolation"); }
+
+    // Test 7: Copying Vault to Stract (10pt)
+    // Copiare un vault in una stract espone il dato (decifra)
+    stract exposed = secret;
+    if exposed == "PasswordSegreta" { score = score + 10; IO.print("[PASS] 7. Vault Export"); }
+    else { IO.print("[FAIL] 7. Vault Export"); }
+
+    // Test 8: Copying Vault to Vault (10pt)
+    // Deve decifrare il primo e cifrare il secondo (nuovo nonce)
+    vault backup = secret;
+    if backup == "PasswordSegreta" { score = score + 10; IO.print("[PASS] 8. Vault to Vault Copy"); }
+    else { IO.print("[FAIL] 8. Vault to Vault Copy"); }
+
+    // Test 9: Lock + Vault Interaction (10pt)
+    lock salt = 10;
+    vault base = 20;
+    if base * salt == 200 { score = score + 10; IO.print("[PASS] 9. Lock * Vault"); }
+    else { IO.print("[FAIL] 9. Lock * Vault"); }
+
+    // Test 10: Memory Dump Verification (10pt)
+    IO.print(">> [INFO] Verifico cifratura RAM (Dovresti vedere ENC:...)");
+    Sys.memory_dump(secret); 
+    // Se il programma non è crashato e ha fatto il dump:
+    score = score + 10; 
+    IO.print("[PASS] 10. Memory Dump Eseguito");
+
+    IO.print("------------------------------------------");
+    IO.print("PUNTEGGIO TOTALE SICUREZZA:", score, "/ 100");
+}

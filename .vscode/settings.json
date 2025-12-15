@@ -1,0 +1,12 @@
+{
+    "workbench.iconTheme":  "vscode-icons",
+    "vsicons.associations.files":  [
+                                       {
+                                           "icon":  "ns",
+                                           "extensions":  [
+                                                              "ns"
+                                                          ],
+                                           "format":  "svg"
+                                       }
+                                   ]
+}

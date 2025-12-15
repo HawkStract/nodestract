@@ -3,63 +3,80 @@ use IO {}
 use Array {}
 
 func main() {
-    IO.print("=== AVVIO DATA STRUCTURE TEST (v0.6.0) ===");
+    IO.print("=== AVVIO DATA STRUCTURE TEST (v0.7.0) ===");
     stract score = 0;
 
-    // Test 1: Array Semplice (10pt)
+    // 1-5: Array Basics (25pt)
     stract list = [10, 20, 30];
-    if list[1] == 20 { score = score + 10; IO.print("[PASS] 1. Lettura Array"); }
-    else { IO.print("[FAIL] 1. Lettura Array"); }
-
-    // Test 2: Array Push (10pt)
+    if list[1] == 20 { score = score + 5; IO.print("[PASS] 1. Lettura Array"); } else { IO.print("Fail 1"); }
+    
     list = Array.push(list, 40);
-    if list[3] == 40 { score = score + 10; IO.print("[PASS] 2. Array Push"); }
-    else { IO.print("[FAIL] 2. Array Push"); }
+    if list[3] == 40 { score = score + 5; IO.print("[PASS] 2. Array Push"); } else { IO.print("Fail 2"); }
+    
+    if Array.len(list) == 4 { score = score + 5; IO.print("[PASS] 3. Array Len"); } else { IO.print("Fail 3"); }
+    
+    stract empty = [];
+    if Array.len(empty) == 0 { score = score + 5; IO.print("[PASS] 4. Empty Array"); } else { IO.print("Fail 4"); }
+    
+    empty = Array.push(empty, 1);
+    if empty[0] == 1 { score = score + 5; IO.print("[PASS] 5. Push to Empty"); } else { IO.print("Fail 5"); }
 
-    // Test 3: Array Len (10pt)
-    if Array.len(list) == 4 { score = score + 10; IO.print("[PASS] 3. Array Len"); }
-    else { IO.print("[FAIL] 3. Array Len"); }
-
-    // Test 4: Mappa Base (10pt)
+    // 6-10: Maps Basics (25pt)
     stract user = { "name": "Hawk", "role": "Admin" };
-    if user["role"] == "Admin" { score = score + 10; IO.print("[PASS] 4. Mappa Base"); }
-    else { IO.print("[FAIL] 4. Mappa Base"); }
+    if user["role"] == "Admin" { score = score + 5; IO.print("[PASS] 6. Mappa Base"); } else { IO.print("Fail 6"); }
+    
+    user = { "name": "Hawk", "active": 1 }; // Reassign structure
+    if user["active"] == 1 { score = score + 5; IO.print("[PASS] 7. Mappa Reassign"); } else { IO.print("Fail 7"); }
+    
+    stract mixed_map = { "id": 1, "val": "Text" };
+    if mixed_map["id"] == 1 { score = score + 5; IO.print("[PASS] 8. Mappa Mixed Int"); } else { IO.print("Fail 8"); }
+    if mixed_map["val"] == "Text" { score = score + 5; IO.print("[PASS] 9. Mappa Mixed Str"); } else { IO.print("Fail 9"); }
+    
+    stract nested_map = { "meta": { "v": 1 } };
+    stract m = nested_map["meta"];
+    if m["v"] == 1 { score = score + 5; IO.print("[PASS] 10. Nested Map Access"); } else { IO.print("Fail 10"); }
 
-    // Test 5: Mappa Nidificata (Array in Mappa) (10pt)
+    // 11-15: Complex Nesting (25pt)
     stract config = { "ids": [100, 200] };
     stract ids = config["ids"];
-    if ids[1] == 200 { score = score + 10; IO.print("[PASS] 5. Array in Mappa"); }
-    else { IO.print("[FAIL] 5. Array in Mappa"); }
+    if ids[1] == 200 { score = score + 5; IO.print("[PASS] 11. Array in Mappa"); } else { IO.print("Fail 11"); }
 
-    // Test 6: Mappa in Array (10pt)
     stract complex_list = [ { "id": 1 }, { "id": 2 } ];
     stract item = complex_list[1];
-    if item["id"] == 2 { score = score + 10; IO.print("[PASS] 6. Mappa in Array"); }
-    else { IO.print("[FAIL] 6. Mappa in Array"); }
+    if item["id"] == 2 { score = score + 5; IO.print("[PASS] 12. Mappa in Array"); } else { IO.print("Fail 12"); }
 
-    // Test 7: Tipi Misti in Array (10pt)
-    stract mixed = [1, "Text", 3.5];
-    if mixed[1] == "Text" { score = score + 10; IO.print("[PASS] 7. Tipi Misti"); }
-    else { IO.print("[FAIL] 7. Tipi Misti"); }
-
-    // Test 8: Modifica Map Value (tramite riassegnazione) (10pt)
-    stract settings = { "vol": 50 };
-    settings = { "vol": 100 };
-    if settings["vol"] == 100 { score = score + 10; IO.print("[PASS] 8. Modifica Struttura"); }
-    else { IO.print("[FAIL] 8. Modifica Struttura"); }
-
-    // Test 9: Accesso Indice Calcolato (10pt)
-    stract idx = 2;
-    stract vec = [10, 20, 30, 40];
-    if vec[idx] == 30 { score = score + 10; IO.print("[PASS] 9. Indice Dinamico"); }
-    else { IO.print("[FAIL] 9. Indice Dinamico"); }
-
-    // Test 10: Deep Nesting (10pt)
     stract deep = { "data": { "raw": [999] } };
     stract l1 = deep["data"];
     stract l2 = l1["raw"];
-    if l2[0] == 999 { score = score + 10; IO.print("[PASS] 10. Deep Nesting"); }
-    else { IO.print("[FAIL] 10. Deep Nesting"); }
+    if l2[0] == 999 { score = score + 5; IO.print("[PASS] 13. Deep Nesting"); } else { IO.print("Fail 13"); }
+
+    stract matrix = [[1, 2], [3, 4]];
+    stract row = matrix[1];
+    if row[0] == 3 { score = score + 5; IO.print("[PASS] 14. Matrix (Array in Array)"); } else { IO.print("Fail 14"); }
+    
+    stract map_matrix = { "grid": [[0, 1], [1, 0]] };
+    stract g = map_matrix["grid"];
+    stract r = g[0];
+    if r[1] == 1 { score = score + 5; IO.print("[PASS] 15. Map Matrix"); } else { IO.print("Fail 15"); }
+
+    // 16-20: Dynamic Access & Types (25pt)
+    stract idx = 2;
+    stract vec = [10, 20, 30, 40];
+    if vec[idx] == 30 { score = score + 5; IO.print("[PASS] 16. Indice Dinamico"); } else { IO.print("Fail 16"); }
+
+    stract key = "target";
+    stract dynamic_map = { "target": 500 };
+    if dynamic_map[key] == 500 { score = score + 5; IO.print("[PASS] 17. Chiave Dinamica"); } else { IO.print("Fail 17"); }
+    
+    stract mixed = [1, "Text", 3.5];
+    if mixed[1] == "Text" { score = score + 5; IO.print("[PASS] 18. Tipi Misti Array"); } else { IO.print("Fail 18"); }
+    
+    stract type_check = { "a": 1, "b": "2" };
+    if type_check["a"] + 1 == 2 { score = score + 5; IO.print("[PASS] 19. Map Type Consistency"); } else { IO.print("Fail 19"); }
+    
+    // Large structure test
+    stract big = { "a": 1, "b": 2, "c": 3, "d": 4 };
+    if big["d"] == 4 { score = score + 5; IO.print("[PASS] 20. Large Map"); } else { IO.print("Fail 20"); }
 
     IO.print("------------------------------------------");
     IO.print("PUNTEGGIO TOTALE DATA:", score, "/ 100");

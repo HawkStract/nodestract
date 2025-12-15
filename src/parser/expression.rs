@@ -3,7 +3,6 @@ use crate::lexer::Token;
 use super::Parser;
 
 impl Parser {
-    // Entry point: Logic OR (||) è il livello più basso
     pub fn parse_expression(&mut self) -> Expression {
         self.parse_logical_or()
     }
@@ -60,7 +59,6 @@ impl Parser {
         left
     }
 
-    // Term: + -
     pub fn parse_term(&mut self) -> Expression {
         let mut left = self.parse_factor();
         while matches!(self.current_token(), Token::Plus | Token::Minus) {
@@ -74,7 +72,6 @@ impl Parser {
         left
     }
 
-    // Factor: * /
     pub fn parse_factor(&mut self) -> Expression {
         let mut left = self.parse_unary();
         while matches!(self.current_token(), Token::Star | Token::Slash) {
@@ -89,13 +86,18 @@ impl Parser {
     }
 
     pub fn parse_unary(&mut self) -> Expression {
-        if self.current_token() == &Token::Minus {
+        // FIX: Supporto per '-' (negazione numerica) e '!' (negazione logica)
+        if matches!(self.current_token(), Token::Minus | Token::Bang) {
+            let operator = match self.current_token() {
+                Token::Minus => "-".to_string(),
+                Token::Bang => "!".to_string(),
+                _ => "".to_string(),
+            };
             self.advance(); 
-            let right = self.parse_unary();
-            return Expression::BinaryOp {
-                left: Box::new(Expression::LiteralNum(0.0)),
-                operator: "-".to_string(),
-                right: Box::new(right),
+            let operand = self.parse_unary(); // Ricorsivo per gestire !!true o --5
+            return Expression::UnaryOp {
+                operator,
+                operand: Box::new(operand),
             };
         }
         self.parse_primary()
@@ -103,6 +105,8 @@ impl Parser {
 
     pub fn parse_primary(&mut self) -> Expression {
         match self.current_token() {
+            Token::True => { self.advance(); Expression::LiteralBool(true) }
+            Token::False => { self.advance(); Expression::LiteralBool(false) }
             Token::LeftBracket => {
                 self.advance(); let mut elements = Vec::new();
                 if self.current_token() != &Token::RightBracket {

@@ -1,13 +1,15 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Lock, Stract, Vault, Safe, Capability, Use, Module, Func, If, Else, While, For, In, Return,
+    True, False, 
     Identifier(String), StringLiteral(String), Number(f64),
     LeftBrace, RightBrace, LeftParen, RightParen, LeftBracket, RightBracket,
-    Equal, EqualEqual, BangEqual,      // !=
-    Greater, GreaterEqual,             // > >=
-    Less, LessEqual,                   // < <=
+    Equal, EqualEqual, 
+    Bang, BangEqual,   // <--- AGGIUNTO Bang (!) accanto a BangEqual (!=)
+    Greater, GreaterEqual,             
+    Less, LessEqual,                   
     Plus, Minus, Star, Slash, 
-    AmperAmper, PipePipe,              // && ||
+    AmperAmper, PipePipe,              
     Dot, Range, Comma, Colon,
     EOF, Unknown(char),
 }
@@ -54,7 +56,7 @@ impl Lexer {
                 }
                 '!' => {
                     if self.peek_next() == '=' { self.position += 2; tokens.push(Token::BangEqual); }
-                    else { tokens.push(Token::Unknown('!')); self.position += 1; }
+                    else { tokens.push(Token::Bang); self.position += 1; } // <--- FIX: Ora riconosce '!' da solo
                 }
                 '>' => { 
                     if self.peek_next() == '=' { self.position += 2; tokens.push(Token::GreaterEqual); }
@@ -103,6 +105,8 @@ impl Lexer {
             "for" => Token::For,
             "in" => Token::In,
             "return" => Token::Return,
+            "true" => Token::True,
+            "false" => Token::False,
             _ => Token::Identifier(text),
         }
     }

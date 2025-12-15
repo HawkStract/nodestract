@@ -31,7 +31,7 @@ pub enum Statement {
     },
     CapabilityUse {
         service: String,
-        params: Vec<(String, String)>,
+        params: Vec<String>,
     },
     FunctionDecl {
         name: String,
@@ -46,6 +46,7 @@ pub enum Statement {
 pub enum Expression {
     LiteralStr(String),
     LiteralNum(f64),
+    LiteralBool(bool),
     Array(Vec<Expression>),
     Map(Vec<(String, Expression)>),
     Index {
@@ -57,6 +58,11 @@ pub enum Expression {
         left: Box<Expression>,
         operator: String,
         right: Box<Expression>,
+    },
+    // MODIFICA: Aggiunto operatore unario (per ! e -)
+    UnaryOp {
+        operator: String,
+        operand: Box<Expression>,
     },
     FunctionCall {
         target: String,

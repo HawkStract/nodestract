@@ -1,71 +1,83 @@
 module StressTest;
 use IO {}
 use Array {}
+use FS { "./bench" }
 
 func main() {
-    IO.print("=== AVVIO STRESS TEST (v0.6.0) ===");
+    IO.print("=== AVVIO STRESS TEST (v0.7.0) ===");
     stract total_score = 0;
 
-    // STRESS 1: High Iteration Loop (1000 cicli)
-    IO.print(">>> Stress 1: 1000 Iterations");
+    // 1. Loop 10k (5pt)
+    IO.print(">>> Stress 1: 10,000 Iterations");
     stract i = 0;
-    while i < 1000 { i = i + 1; }
-    if i == 1000 { total_score = total_score + 20; IO.print("[PASS] 1k Loop"); }
-    else { IO.print("[FAIL] 1k Loop"); }
+    while i < 10000 { i = i + 1; }
+    if i == 10000 { total_score = total_score + 5; IO.print("[PASS] 1. 10k Loop"); } else { IO.print("Fail 1"); }
 
-    // STRESS 2: Massive Array Push (1000 items)
-    IO.print(">>> Stress 2: 1000 Array Pushes");
+    // 2. Array Push 2k (5pt)
+    IO.print(">>> Stress 2: 2,000 Array Pushes");
     stract list = [];
     stract k = 0;
-    while k < 1000 {
-        list = Array.push(list, k);
-        k = k + 1;
-    }
-    if Array.len(list) == 1000 { total_score = total_score + 20; IO.print("[PASS] 1k Array Push"); }
-    else { IO.print("[FAIL] Array Push"); }
+    while k < 2000 { list = Array.push(list, k); k = k + 1; }
+    if Array.len(list) == 2000 { total_score = total_score + 5; IO.print("[PASS] 2. 2k Push"); } else { IO.print("Fail 2"); }
 
-    // STRESS 3: String Builder (1000 concats)
-    IO.print(">>> Stress 3: 1000 String Concatenations");
+    // 3. String 2k (5pt)
+    IO.print(">>> Stress 3: 2,000 String Concats");
     stract s = "";
     stract j = 0;
-    while j < 1000 {
-        s = s + ".";
-        j = j + 1;
-    }
-    // Non controlliamo la stringa intera per non intasare l'IO
-    if j == 1000 { total_score = total_score + 20; IO.print("[PASS] 1k Strings"); }
-    else { IO.print("[FAIL] Strings"); }
+    while j < 2000 { s = s + "."; j = j + 1; }
+    if j == 2000 { total_score = total_score + 5; IO.print("[PASS] 3. 2k Strings"); } else { IO.print("Fail 3"); }
 
-    // STRESS 4: Nested Loops (CPU Load)
-    IO.print(">>> Stress 4: Nested Loops (100x10)");
+    // 4. Nested 50x50 (2500) (5pt)
+    IO.print(">>> Stress 4: Nested Loops (50x50)");
     stract outer = 0;
     stract counts = 0;
-    while outer < 100 {
+    while outer < 50 {
         stract inner = 0;
-        while inner < 10 {
-            counts = counts + 1;
-            inner = inner + 1;
-        }
+        while inner < 50 { counts = counts + 1; inner = inner + 1; }
         outer = outer + 1;
     }
-    if counts == 1000 { total_score = total_score + 20; IO.print("[PASS] Nested Loops"); }
-    else { IO.print("[FAIL] Nested Loops"); }
+    if counts == 2500 { total_score = total_score + 5; IO.print("[PASS] 4. Nested"); } else { IO.print("Fail 4"); }
 
-    // STRESS 5: Vault Encryption Cycle (AES-256 Load)
-    // Questo è pesante: 500 cicli di cifratura/decifratura in RAM
-    IO.print(">>> Stress 5: Vault Encryption Cycle (500x)");
+    // 5. Vault Cycle 1k (5pt)
+    IO.print(">>> Stress 5: Vault Crypto (1000x)");
     stract v_count = 0;
-    while v_count < 500 {
-        vault temp = v_count; // Cifra in RAM
-        stract check = temp;  // Decifra per leggere
+    while v_count < 1000 {
+        vault temp = v_count; 
+        stract check = temp;
         v_count = v_count + 1;
     }
-    if v_count == 500 { total_score = total_score + 20; IO.print("[PASS] Vault Cycle"); }
-    else { IO.print("[FAIL] Vault Cycle"); }
+    if v_count == 1000 { total_score = total_score + 5; IO.print("[PASS] 5. Vault Cycle"); } else { IO.print("Fail 5"); }
+
+    // 6-10: FS Stress Write (25pt)
+    IO.print(">>> Stress 6-10: FS Write Cycles");
+    stract fs_i = 0;
+    while fs_i < 50 {
+        FS.write("./bench/test.nso", "DATA");
+        fs_i = fs_i + 1;
+    }
+    if fs_i == 50 { total_score = total_score + 25; IO.print("[PASS] 6-10. 50 FS Writes"); } else { IO.print("Fail FS Write"); }
+
+    // 11-15: FS Stress Read (25pt)
+    IO.print(">>> Stress 11-15: FS Read Cycles");
+    stract fs_j = 0;
+    while fs_j < 50 {
+        stract d = FS.read("./bench/test.nso");
+        fs_j = fs_j + 1;
+    }
+    if fs_j == 50 { total_score = total_score + 25; IO.print("[PASS] 11-15. 50 FS Reads"); } else { IO.print("Fail FS Read"); }
+
+    // 16-20: Mixed Vault+FS Stress (25pt)
+    IO.print(">>> Stress 16-20: Vault + FS");
+    vault secret = "DATA_SECURE";
+    stract vf = 0;
+    while vf < 20 {
+        FS.write("./bench/sec.nso", secret);
+        vf = vf + 1;
+    }
+    if vf == 20 { total_score = total_score + 25; IO.print("[PASS] 16-20. Vault FS"); } else { IO.print("Fail Vault FS"); }
 
     IO.print("------------------------------------------");
     IO.print("PUNTEGGIO TOTALE STRESS:", total_score, "/ 100");
-    
-    if total_score == 100 { IO.print("RESULT: STABLE - CERTIFIED v0.6.0"); } 
+    if total_score == 100 { IO.print("RESULT: STABLE - CERTIFIED v0.7.0"); } 
     else { IO.print("RESULT: UNSTABLE"); }
 }

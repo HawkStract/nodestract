@@ -8,12 +8,12 @@ impl Parser {
 
         while self.position < self.tokens.len() {
             let token = self.current_token().clone();
-            
+
             match token {
                 Token::EOF => break,
                 Token::Use => statements.push(self.parse_capability()),
                 Token::Lock | Token::Stract | Token::Vault => {
-                    let is_mut = matches!(token, Token::Stract | Token::Vault); 
+                    let is_mut = matches!(token, Token::Stract | Token::Vault);
                     let is_sec = matches!(token, Token::Vault);
                     statements.push(self.parse_var_decl(is_mut, is_sec));
                 },
@@ -38,20 +38,27 @@ impl Parser {
     }
 
     fn parse_capability(&mut self) -> Statement {
-        self.advance();
+        self.advance(); // skip 'use'
         let service_name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => "Unknown".to_string(),
         };
-        self.advance(); 
+        self.advance();
+        
+        let mut params = Vec::new();
+        // Se c'è una graffa aperta, parsiamo i parametri (es: percorsi consentiti)
         if self.current_token() == &Token::LeftBrace {
-             self.advance(); 
-             while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF { 
-                 self.advance(); 
+             self.advance();
+             while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF {
+                 if let Token::StringLiteral(s) = self.current_token() {
+                     params.push(s.clone());
+                 }
+                 self.advance();
+                 // Salta virgole o identifier inutili per ora, prendiamo solo le stringhe
              }
-             self.advance(); 
+             self.advance(); // skip '}'
         }
-        Statement::CapabilityUse { service: service_name, params: vec![] }
+        Statement::CapabilityUse { service: service_name, params }
     }
 
     fn parse_var_decl(&mut self, is_mutable: bool, is_secure: bool) -> Statement {
@@ -59,17 +66,17 @@ impl Parser {
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(), _ => "Unknown".to_string(),
         };
-        self.advance(); self.advance(); 
+        self.advance(); self.advance();
         let value = self.parse_expression();
         Statement::VarDecl { is_mutable, is_secure, name, value }
     }
-    
+
     fn parse_function(&mut self) -> Statement {
         self.advance();
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(), _ => "Anon".to_string(),
         };
-        self.advance(); self.advance(); 
+        self.advance(); self.advance();
         let mut params = Vec::new();
         if self.current_token() != &Token::RightParen {
             if let Token::Identifier(p) = self.current_token() { params.push(p.clone()); self.advance(); }
@@ -78,7 +85,7 @@ impl Parser {
                 if let Token::Identifier(p) = self.current_token() { params.push(p.clone()); self.advance(); }
             }
         }
-        self.advance(); self.advance(); 
+        self.advance(); self.advance();
         let body = self.parse_block();
         Statement::FunctionDecl { name, params, body }
     }
@@ -97,16 +104,16 @@ impl Parser {
                 Token::While => body.push(self.parse_while_statement()),
                 Token::For => body.push(self.parse_for_statement()),
                 Token::Identifier(_) => {
-                    if self.peek() == &Token::Equal { body.push(self.parse_assignment()); } 
+                    if self.peek() == &Token::Equal { body.push(self.parse_assignment()); }
                     else { body.push(self.parse_func_call_stmt()); }
                 },
                 _ => self.advance(),
             }
         }
-        self.advance(); 
+        self.advance();
         body
     }
-    
+
     fn parse_if_statement(&mut self) -> Statement {
         self.advance(); let condition = self.parse_expression();
         while self.current_token() != &Token::LeftBrace { self.advance(); }
@@ -127,19 +134,17 @@ impl Parser {
     }
 
     fn parse_for_statement(&mut self) -> Statement {
-        self.advance(); // Consuma 'for'
+        self.advance();
         let iterator = match self.current_token() {
             Token::Identifier(s) => s.clone(), _ => "i".to_string()
         };
-        self.advance(); // Consuma nome iteratore
-        
-        let start = self.parse_primary(); 
-        // RIMOSSO: self.advance(); <--- QUESTO ERA IL BUG! parse_primary avanza già da solo.
-        
-        let end = self.parse_primary();
-        
-        while self.current_token() != &Token::LeftBrace { self.advance(); }
         self.advance(); 
+
+        let start = self.parse_primary(); 
+        let end = self.parse_primary();
+
+        while self.current_token() != &Token::LeftBrace { self.advance(); }
+        self.advance();
         let body = self.parse_block();
         Statement::ForStatement { iterator, start, end, body }
     }
@@ -152,7 +157,7 @@ impl Parser {
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(), _ => "Unknown".to_string(),
         };
-        self.advance(); self.advance(); 
+        self.advance(); self.advance();
         let value = self.parse_expression();
         Statement::Assignment { name, value }
     }
@@ -168,13 +173,13 @@ impl Parser {
                 target = format!("{}.{}", target, method); self.advance();
             }
         }
-        self.advance(); 
+        self.advance();
         let mut args = Vec::new();
         if self.current_token() != &Token::RightParen {
             args.push(self.parse_expression());
             while self.current_token() == &Token::Comma { self.advance(); args.push(self.parse_expression()); }
         }
-        self.advance(); 
+        self.advance();
         Statement::Expr(Expression::FunctionCall { target, args })
     }
 }

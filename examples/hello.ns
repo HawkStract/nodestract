@@ -1,7 +1,0 @@
-module Hello;
-use IO {}
-
-func main() {
-    lock message = "Hello, Node Stract!";
-    IO.print(message);
-}

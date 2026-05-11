@@ -1,0 +1,26 @@
+module CloudSync;
+use IO {}
+use Net { "https://jsonplaceholder.typicode.com" } // Whitelist stretta
+import "playground/hawk_db/config.ns";
+
+func sync_record(id, data) {
+    stract payload = "{ \"id\": " + id + ", \"data\": \"" + data + "\" }";
+    
+    // Tentativo di invio al cloud
+    stract response = Net.post(CLOUD_ENDPOINT, payload);
+    
+    if response {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+func fetch_remote_config() {
+    // Scarica configurazioni remote (simulato)
+    stract res = Net.get("https://jsonplaceholder.typicode.com/todos/1");
+    if res {
+        return res;
+    }
+    return "OFFLINE_MODE";
+}

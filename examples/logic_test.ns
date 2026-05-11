@@ -1,7 +1,7 @@
 module LogicTest;
 use IO {}
 
-func main() {
+func run_logic_test() {
     IO.print("=== AVVIO LOGIC TEST (Target: 100/100) ===");
     stract score = 0;
     stract a = 10;

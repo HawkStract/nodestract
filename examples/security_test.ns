@@ -3,7 +3,7 @@ use IO {}
 use Sys {}
 use FS { "./secure_data" }
 
-func main() {
+func run_security_test() {
     IO.print("=== AVVIO SECURITY TEST v0.8.0 (40 Tests Fixed) ===");
     stract score = 0;
 

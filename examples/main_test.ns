@@ -1,0 +1,42 @@
+module MainTest;
+use IO {}
+
+// [IMPORT SYSTEM]
+// Carichiamo tutti i moduli.
+// Grazie al nuovo interprete ricorsivo, questo caricherà le funzioni
+// run_math_test, run_data_test, ecc. nello scope globale.
+import "examples/math_test.ns";
+import "examples/data_test.ns";
+import "examples/security_test.ns";
+import "examples/net_test.ns";
+
+func main() {
+    IO.print("==============================================");
+    IO.print("      HAWKSTRACT GLOBAL TEST SUITE v0.9.0     ");
+    IO.print("==============================================");
+    IO.print("");
+
+    // 1. Math Module
+    IO.print(">>> EXECUTING MODULE: MATH");
+    run_math_test();
+    IO.print("");
+
+    // 2. Data Module
+    IO.print(">>> EXECUTING MODULE: DATA STRUCTURES");
+    run_data_test();
+    IO.print("");
+
+    // 3. Security Module
+    IO.print(">>> EXECUTING MODULE: SECURITY & FS");
+    run_security_test();
+    IO.print("");
+
+    // 4. Network Module (Richiede connessione)
+    IO.print(">>> EXECUTING MODULE: NETWORK");
+    run_net_test();
+    IO.print("");
+
+    IO.print("==============================================");
+    IO.print("      GLOBAL TEST SUITE COMPLETED             ");
+    IO.print("==============================================");
+}

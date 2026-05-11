@@ -2,7 +2,7 @@ module DataTest;
 use IO {}
 use Array {}
 
-func main() {
+func run_data_test() {
     IO.print("=== AVVIO DATA TEST v0.8.0 (50 Tests - Resilienza Tipi) ===");
     stract score = 0;
 

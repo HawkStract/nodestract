@@ -1,0 +1,50 @@
+module MainApp;
+use IO {}
+use Sys {}
+
+import "playground/hawk_db/config.ns";
+import "playground/hawk_db/auth.ns";
+import "playground/hawk_db/core.ns";
+import "playground/hawk_db/utils.ns";
+
+func main() {
+    IO.print("################################################");
+    IO.print("##           HAWK DB  v", version, "           ##");
+    IO.print("##    Secure. Atomic. Distributed.            ##");
+    IO.print("################################################");
+    IO.print("");
+
+    vault session = null;
+    stract attempts = 0;
+    
+    while attempts < 3 {
+        IO.print("--- LOGIN REQUIRED (admin / root123) ---");
+        stract u = IO.input("Username: ");
+        stract p = IO.input("Password: ");
+        
+        session = login(u, p);
+        
+        if session {
+            IO.print(">>> Access Granted. Token Secured in Vault.");
+            break; // <--- ORA FUNZIONA! Esci dal loop login
+        } else {
+            attempts++;
+            IO.print("!!! Access Denied. Attempts left:", 3 - attempts);
+        }
+    }
+
+    if !session {
+        IO.print("SYSTEM LOCKDOWN. TOO MANY FAILED ATTEMPTS.");
+        return; // Esce da main
+    }
+
+    stract running = true;
+    while running {
+        // ... (resto del loop uguale) ...
+        if cmd == "5" {
+            IO.print("Shutting down HawkDB...");
+            running = false; 
+            // break; // Opzionale, ora funzionerebbe anche break qui
+        }
+    }
+}

@@ -5,7 +5,7 @@ use FS { "./net_data" }
 
 use Net { "https://jsonplaceholder.typicode.com", "https://www.google.com/robots.txt" }
 
-func main() {
+func run_net_test() {
     IO.print("=== AVVIO NET TEST v0.9.3 (Final Polish) ===");
     stract score = 0;
 

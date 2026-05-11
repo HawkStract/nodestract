@@ -1,0 +1,48 @@
+module StorageEngine;
+use IO {}
+use FS { "./playground/data", "./playground/logs" } // Accesso granulare
+import "playground/hawk_db/config.ns";
+import "playground/hawk_db/utils.ns";
+
+func write_log(action) {
+    stract path = LOG_DIR + "audit.txt";
+    stract entry = log_format("INFO", action);
+    
+    // In un sistema reale faremmo append. Qui simuliamo leggendo e riscrivendo.
+    stract current = FS.read(path);
+    if !current { current = ""; }
+    
+    stract new_log = current + " | " + entry;
+    FS.write(path, new_log);
+}
+
+func save_record(key, value) {
+    stract filename = DATA_DIR + key + ".db";
+    
+    // Scrittura atomica (simulata)
+    if FS.write(filename, value) {
+        write_log("Record saved: " + key);
+        return true;
+    } else {
+        write_log("ERROR: Failed to save " + key);
+        return false;
+    }
+}
+
+func load_record(key) {
+    stract filename = DATA_DIR + key + ".db";
+    stract data = FS.read(filename);
+    
+    if data {
+        write_log("Record accessed: " + key);
+        return data;
+    } else {
+        return null;
+    }
+}
+
+func exists(key) {
+    // Check veloce
+    if load_record(key) { return true; }
+    return false;
+}

@@ -1,6 +1,7 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Lock, Stract, Vault, Safe, Capability, Use, Module, Func, If, Else, While, For, In, Return,
+    Import, Break,
     True, False,
     Identifier(String), StringLiteral(String), Number(f64),
     LeftBrace, RightBrace, LeftParen, RightParen, LeftBracket, RightBracket,
@@ -106,53 +107,42 @@ impl Lexer {
         }
         let text: String = self.input[start..self.position].iter().collect();
 
-        // NESSUN CONTROLLO REGEX QUI per non rompere i moduli Standard (IO, FS, ecc.)
         match text.as_str() {
             "lock" => Token::Lock, "stract" => Token::Stract, "vault" => Token::Vault,
             "safe" => Token::Safe, "capability" => Token::Capability, "use" => Token::Use,
             "module" => Token::Module, "func" => Token::Func, "if" => Token::If,
             "else" => Token::Else, "while" => Token::While, "for" => Token::For,
-            "in" => Token::In, "return" => Token::Return, "true" => Token::True,
-            "false" => Token::False,
+            "in" => Token::In, "return" => Token::Return, 
+            "true" => Token::True, "false" => Token::False, 
+            "import" => Token::Import, "break" => Token::Break,
             _ => Token::Identifier(text),
         }
     }
 
     fn is_keyword(&self, s: &str) -> bool {
-        matches!(s, "lock" | "stract" | "vault" | "safe" | "capability" | "use" | "module" | "func" | "if" | "else" | "while" | "for" | "in" | "return" | "true" | "false")
+        matches!(s, "lock" | "stract" | "vault" | "safe" | "capability" | "use" | "module" | "func" | "if" | "else" | "while" | "for" | "in" | "return" | "true" | "false" | "import" | "break")
     }
 
-    // [FIX] Nuova implementazione con supporto ESCAPE SEQUENCES
     fn read_string(&mut self) -> Token {
-        self.position += 1; // Salta la virgoletta di apertura
+        self.position += 1; 
         let mut text = String::new();
-        
         while self.position < self.input.len() {
             let c = self.input[self.position];
-            
             if c == '\\' {
-                // Abbiamo trovato un escape!
                 self.position += 1;
                 if self.position < self.input.len() {
                     let escaped_char = self.input[self.position];
                     match escaped_char {
-                        'n' => text.push('\n'),
-                        't' => text.push('\t'),
-                        'r' => text.push('\r'),
-                        '"' => text.push('"'),  // Qui sta la magia: \" diventa "
-                        '\\' => text.push('\\'),
-                        _ => text.push(escaped_char), // Fallback
+                        'n' => text.push('\n'), 't' => text.push('\t'), 'r' => text.push('\r'),
+                        '"' => text.push('"'), '\\' => text.push('\\'),
+                        _ => text.push(escaped_char),
                     }
                 }
-            } else if c == '"' {
-                break; // Fine stringa
-            } else {
-                text.push(c);
-            }
+            } else if c == '"' { break; } 
+            else { text.push(c); }
             self.position += 1;
         }
-        
-        self.position += 1; // Salta la virgoletta di chiusura
+        self.position += 1;
         Token::StringLiteral(text)
     }
 

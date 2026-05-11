@@ -4,7 +4,7 @@ use super::Interpreter;
 
 impl Interpreter {
     pub fn execute_statement(&mut self, stmt: &Statement) {
-        if self.last_return.is_some() { return; }
+        if self.last_return.is_some() || self.loop_break { return; }
 
         match stmt {
             Statement::VarDecl { name, value, is_mutable, is_secure } => {
@@ -21,11 +21,17 @@ impl Interpreter {
 
                 if cond_val.is_truthy() {
                     self.enter_scope();
-                    for s in then_branch { self.execute_statement(s); }
+                    for s in then_branch { 
+                        self.execute_statement(s); 
+                        if self.last_return.is_some() || self.loop_break { break; } 
+                    }
                     self.exit_scope();
                 } else if let Some(else_stmts) = else_branch {
                     self.enter_scope();
-                    for s in else_stmts { self.execute_statement(s); }
+                    for s in else_stmts { 
+                        self.execute_statement(s); 
+                        if self.last_return.is_some() || self.loop_break { break; } 
+                    }
                     self.exit_scope();
                 }
             }
@@ -39,6 +45,7 @@ impl Interpreter {
                     for s in body {
                         self.execute_statement(s);
                         if self.last_return.is_some() { self.exit_scope(); return; }
+                        if self.loop_break { self.exit_scope(); self.loop_break = false; return; }
                     }
                     self.exit_scope();
                 }
@@ -58,12 +65,16 @@ impl Interpreter {
                     for s in body {
                         self.execute_statement(s);
                         if self.last_return.is_some() { self.exit_scope(); return; }
+                        if self.loop_break { self.exit_scope(); self.loop_break = false; return; }
                     }
                     self.exit_scope();
                 }
             }
             Statement::ReturnStatement { value } => {
                 self.last_return = Some(self.eval_expression(value));
+            }
+            Statement::Break => {
+                self.loop_break = true;
             }
             Statement::Expr(expr) => { self.eval_expression(expr); }
             _ => {}

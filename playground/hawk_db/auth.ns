@@ -1,0 +1,30 @@
+module Auth;
+use IO {}
+use Sys {}
+
+// Simuliamo un database utenti in memoria protetta
+func login(user, pass) {
+    // In uno scenario reale, leggeremmo un file cifrato.
+    // Qui usiamo Vault per proteggere le credenziali in RAM.
+    
+    vault admin_user = "admin";
+    vault admin_pass = "root123"; // Questo viene cifrato subito in memoria
+    
+    // Verifica credenziali
+    if user == "admin" {
+        if pass == "root123" {
+            vault session_token = "SESSION_X99_SECURE";
+            return session_token;
+        }
+    }
+    
+    return null;
+}
+
+func verify_session(token) {
+    // Verifica se il token è valido (decifrandolo al volo)
+    if token == "SESSION_X99_SECURE" {
+        return true;
+    }
+    return false;
+}

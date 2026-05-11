@@ -9,6 +9,8 @@ pub enum Statement {
     ReturnStatement { value: Expression },
     CapabilityUse { service: String, params: Vec<String> },
     FunctionDecl { name: String, params: Vec<String>, body: Vec<Statement> },
+    Import { path: String },
+    Break,
     Expr(Expression),
 }
 

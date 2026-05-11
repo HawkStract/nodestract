@@ -1,0 +1,13 @@
+module Config;
+
+// Configurazione Globale
+lock APP_NAME = "HawkDB Enterprise";
+lock VERSION = "1.0.0-rc1";
+lock MAX_RETRIES = 3;
+
+// Paths
+lock DATA_DIR = "./playground/data/";
+lock LOG_DIR = "./playground/logs/";
+
+// Networking
+lock CLOUD_ENDPOINT = "https://jsonplaceholder.typicode.com/posts";

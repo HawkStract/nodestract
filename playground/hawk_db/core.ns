@@ -1,0 +1,48 @@
+module Core;
+use IO {}
+import "playground/hawk_db/storage.ns";
+import "playground/hawk_db/cloud.ns";
+import "playground/hawk_db/auth.ns";
+
+// Variabile di stato del database in memoria (Cache)
+stract MEM_CACHE = {}; 
+stract CACHE_HITS = 0;
+stract TOTAL_OPS = 0;
+
+func db_put(token, key, value) {
+    TOTAL_OPS++;
+    
+    if !verify_session(token) {
+        return "AUTH_ERROR";
+    }
+    
+    // 1. Scrittura su Disco
+    if save_record(key, value) {
+        // 2. Aggiornamento Cache
+        // (Nota: in v0.9 l'assegnazione a mappa dinamica è limitata, usiamo variabili simulate per ora)
+        
+        // 3. Sync Cloud asincrono (Best effort)
+        if sync_record(key, value) {
+            return "SUCCESS_SYNCED";
+        }
+        return "SUCCESS_LOCAL_ONLY";
+    }
+    return "IO_ERROR";
+}
+
+func db_get(token, key) {
+    TOTAL_OPS++;
+    if !verify_session(token) { return "AUTH_ERROR"; }
+    
+    // Qui controlleremmo la cache...
+    
+    stract disk_val = load_record(key);
+    if disk_val {
+        return disk_val;
+    }
+    return "NOT_FOUND";
+}
+
+func get_stats() {
+    return "Total Ops: " + TOTAL_OPS;
+}

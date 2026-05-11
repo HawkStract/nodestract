@@ -3,7 +3,7 @@ use IO {}
 use Array {}
 use FS { "./bench" }
 
-func main() {
+func run_stress_test() {
     IO.print("=== AVVIO STRESS TEST (v0.7.0) ===");
     stract total_score = 0;
 

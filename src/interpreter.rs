@@ -1,8 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use crate::ast::{Program, Statement};
 use crate::value::Value;
-
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce};
 use aes_gcm::aead::rand_core::RngCore;
 
@@ -11,7 +10,7 @@ pub mod statements;
 pub mod ops;
 pub mod functions;
 pub mod fs;
-pub mod net; // <--- NUOVO MODULO
+pub mod net;
 
 #[derive(Clone, Debug)]
 pub struct VarEntry {
@@ -24,9 +23,11 @@ pub struct Interpreter {
     pub scopes: Vec<HashMap<String, VarEntry>>,
     pub capabilities: Vec<String>,
     pub fs_allow_list: Vec<String>,
-    pub net_allow_list: Vec<String>, // <--- NUOVA WHITELIST
+    pub net_allow_list: Vec<String>,
     pub functions: HashMap<String, Statement>,
+    pub loaded_files: HashSet<String>,
     pub last_return: Option<Value>,
+    pub loop_break: bool, // <--- NUOVO FLAG
 }
 
 impl Interpreter {
@@ -35,74 +36,77 @@ impl Interpreter {
             scopes: vec![HashMap::new()],
             capabilities: Vec::new(),
             fs_allow_list: Vec::new(),
-            net_allow_list: Vec::new(), // Init
+            net_allow_list: Vec::new(),
             functions: HashMap::new(),
+            loaded_files: HashSet::new(),
             last_return: None,
+            loop_break: false, // <--- Inizializzato a false
         }
     }
 
-    // ... (metodi current_scope, enter_scope, exit_scope, get_var, set_var, define_var, get_key, encrypt_vault, decrypt_vault RIMANGONO UGUALI - Copiali dal vecchio file) ...
-    
-    pub fn current_scope(&mut self) -> &mut HashMap<String, VarEntry> {
-        self.scopes.last_mut().unwrap()
-    }
-
-    pub fn enter_scope(&mut self) {
-        self.scopes.push(HashMap::new());
-    }
-
-    pub fn exit_scope(&mut self) {
-        self.scopes.pop();
-    }
-
-    pub fn get_var(&self, name: &str) -> Value {
-        for scope in self.scopes.iter().rev() {
-            if let Some(entry) = scope.get(name) {
-                return entry.value.clone();
+    pub fn load_program(&mut self, program: Program) {
+        for stmt in &program.statements {
+            match stmt {
+                crate::ast::Statement::CapabilityUse { service, params } => { 
+                    if !self.capabilities.contains(service) { self.capabilities.push(service.clone()); }
+                    if service == "FS" { for p in params { if !self.fs_allow_list.contains(p) { self.fs_allow_list.push(p.clone()); } } } 
+                    else if service == "Net" { for p in params { if !self.net_allow_list.contains(p) { self.net_allow_list.push(p.clone()); } } }
+                },
+                crate::ast::Statement::FunctionDecl { name, .. } => { self.functions.insert(name.clone(), stmt.clone()); },
+                crate::ast::Statement::VarDecl { .. } => { self.execute_statement(stmt); },
+                crate::ast::Statement::Import { path } => { self.handle_import(path); },
+                _ => {}
             }
         }
-        Value::Null
     }
 
+    pub fn handle_import(&mut self, path: &str) {
+        if self.loaded_files.contains(path) { return; }
+        let source = match std::fs::read_to_string(path) {
+            Ok(s) => s,
+            Err(_) => { println!("RUNTIME ERROR: Could not import module '{}'. File not found.", path); return; }
+        };
+        self.loaded_files.insert(path.to_string());
+        let mut lexer = crate::lexer::Lexer::new(&source);
+        let tokens = lexer.tokenize();
+        let mut parser = crate::parser::Parser::new(tokens);
+        let program = parser.parse();
+        self.load_program(program);
+    }
+    
+    pub fn current_scope(&mut self) -> &mut HashMap<String, VarEntry> { self.scopes.last_mut().unwrap() }
+    pub fn enter_scope(&mut self) { self.scopes.push(HashMap::new()); }
+    pub fn exit_scope(&mut self) { self.scopes.pop(); }
+    pub fn get_var(&self, name: &str) -> Value {
+        for scope in self.scopes.iter().rev() { if let Some(entry) = scope.get(name) { return entry.value.clone(); } }
+        Value::Null
+    }
     pub fn set_var(&mut self, name: String, value: Value) {
         for scope in self.scopes.iter_mut().rev() {
             if let Some(entry) = scope.get_mut(&name) {
-                if !entry.is_mutable {
-                    println!("Runtime Error: Cannot assign to lock (constant) '{}'.", name);
-                    return;
-                }
-                let final_val = if entry.is_secure {
-                    let enc = Self::encrypt_vault(&value.to_string());
-                    Value::String(enc)
-                } else {
-                    value
-                };
+                if !entry.is_mutable { println!("Runtime Error: Cannot assign to lock (constant) '{}'.", name); return; }
+                let final_val = if entry.is_secure { let enc = Self::encrypt_vault(&value.to_string()); Value::String(enc) } else { value };
                 entry.value = final_val;
                 return;
             }
         }
         println!("Runtime Error: Variable '{}' not declared before assignment.", name);
     }
-
     pub fn define_var(&mut self, name: String, value: Value, is_mutable: bool, is_secure: bool) {
         let final_val = if is_secure {
-            let s = if let Value::String(ref enc_str) = value {
-                if enc_str.starts_with("ENC:") { Self::decrypt_vault(enc_str) } else { value.to_string() }
-            } else { value.to_string() };
+            let s = if let Value::String(ref enc_str) = value { if enc_str.starts_with("ENC:") { Self::decrypt_vault(enc_str) } else { value.to_string() } } else { value.to_string() };
             Value::String(Self::encrypt_vault(&s))
         } else {
             if let Value::String(ref enc_str) = value {
                 if enc_str.starts_with("ENC:") {
                     let decrypted = Self::decrypt_vault(enc_str);
-                    if let Ok(i) = decrypted.parse::<i64>() { Value::Integer(i) }
-                    else if let Ok(f) = decrypted.parse::<f64>() { Value::Float(f) }
-                    else { Value::String(decrypted) }
+                    if let Ok(i) = decrypted.parse::<i64>() { Value::Integer(i) } else if let Ok(f) = decrypted.parse::<f64>() { Value::Float(f) } else { Value::String(decrypted) }
                 } else { value }
             } else { value }
         };
         self.current_scope().insert(name, VarEntry { value: final_val, is_mutable, is_secure });
     }
-
+    
     fn get_key() -> [u8; 32] {
         let key_str = env::var("NSC_VAULT_KEY").unwrap_or_else(|_| "HAWK_MASTER_KEY_2025_SECURE_AES_".to_string());
         let mut key_bytes = [0u8; 32];
@@ -110,7 +114,6 @@ impl Interpreter {
         for (i, b) in bytes.iter().enumerate().take(32) { key_bytes[i] = *b; }
         key_bytes
     }
-
     pub fn encrypt_vault(val: &str) -> String {
         let key = Self::get_key();
         let cipher = Aes256Gcm::new(&key.into());
@@ -122,7 +125,6 @@ impl Interpreter {
             Err(_) => "ERROR_ENCRYPT".to_string()
         }
     }
-
     pub fn decrypt_vault(val: &str) -> String {
         let parts: Vec<&str> = val.split(':').collect();
         if parts.len() != 3 { return "ERROR_FORMAT".to_string(); }
@@ -137,21 +139,7 @@ impl Interpreter {
     }
 
     pub fn run(&mut self, program: Program) {
-        for stmt in &program.statements {
-            match stmt {
-                crate::ast::Statement::CapabilityUse { service, params } => { 
-                    self.capabilities.push(service.clone());
-                    if service == "FS" {
-                        self.fs_allow_list = params.clone();
-                    } else if service == "Net" {
-                        self.net_allow_list = params.clone(); // <--- Load URL whitelist
-                    }
-                },
-                crate::ast::Statement::FunctionDecl { name, .. } => { self.functions.insert(name.clone(), stmt.clone()); },
-                crate::ast::Statement::VarDecl { .. } => { self.execute_statement(stmt); },
-                _ => {}
-            }
-        }
+        self.load_program(program);
         if let Some(func_stmt) = self.functions.get("main").cloned() {
             if let crate::ast::Statement::FunctionDecl { body, .. } = func_stmt {
                 for s in body { self.execute_statement(&s); }

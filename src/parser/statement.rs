@@ -10,6 +10,7 @@ impl Parser {
             match token {
                 Token::EOF => break,
                 Token::Use => statements.push(self.parse_capability()),
+                Token::Import => statements.push(self.parse_import()),
                 Token::Lock | Token::Stract | Token::Vault => {
                     let is_mut = matches!(token, Token::Stract | Token::Vault);
                     let is_sec = matches!(token, Token::Vault);
@@ -22,10 +23,18 @@ impl Parser {
                 Token::While => statements.push(self.parse_while_statement()),
                 Token::For => statements.push(self.parse_for_statement()),
                 Token::Return => statements.push(self.parse_return_statement()),
+                Token::Break => { self.advance(); statements.push(Statement::Break); },
                 _ => self.advance(),
             }
         }
         Program { statements }
+    }
+
+    fn parse_import(&mut self) -> Statement {
+        self.advance(); 
+        let path = if let Token::StringLiteral(s) = self.current_token() { s.clone() } else { "Unknown".to_string() };
+        self.advance(); 
+        Statement::Import { path }
     }
 
     fn parse_identifier_stmt(&mut self) -> Statement {
@@ -89,12 +98,9 @@ impl Parser {
         self.advance();
         let name = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "Unknown".to_string() };
         
-        // CHECK NAME CONVENTION (REGEX SIMULATA)
-        // Permettiamo solo variabili che iniziano con minuscola o '_'
         let first = name.chars().next().unwrap_or(' ');
         if !first.is_lowercase() && first != '_' {
              println!("SYNTAX WARNING: Variable '{}' should start with lowercase or '_'.", name);
-             // In una versione più severa, potremmo fare un panic o ritornare un errore
         }
 
         self.advance(); self.advance(); 
@@ -134,6 +140,8 @@ impl Parser {
                 Token::While => body.push(self.parse_while_statement()),
                 Token::For => body.push(self.parse_for_statement()),
                 Token::Identifier(_) => body.push(self.parse_identifier_stmt()),
+                Token::Import => body.push(self.parse_import()),
+                Token::Break => { self.advance(); body.push(Statement::Break); },
                 _ => self.advance(),
             }
         }

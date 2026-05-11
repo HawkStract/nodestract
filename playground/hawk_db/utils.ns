@@ -1,0 +1,23 @@
+module Utils;
+use IO {}
+
+func get_timestamp() {
+    // In un linguaggio reale useremmo System.time(), qui simuliamo un counter
+    // o usiamo una chiamata di rete veloce per avere un 'tick' se necessario.
+    // Per ora ritorniamo una stringa fissa o un counter incrementale.
+    return "TS_" + 123456; 
+}
+
+func log_format(level, msg) {
+    stract prefix = "[INFO]";
+    if level == "ERROR" { prefix = "[ERROR]"; }
+    if level == "WARN"  { prefix = "[WARN]"; }
+    if level == "SEC"   { prefix = "[SECURITY]"; }
+    
+    return prefix + " " + msg;
+}
+
+func percent(val, total) {
+    if total == 0 { return 0; }
+    return (val * 100) / total;
+}

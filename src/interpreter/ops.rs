@@ -6,10 +6,11 @@ impl Interpreter {
         if let Value::String(ref s) = val {
             if s.starts_with("ENC:") {
                 let decrypted = Self::decrypt_vault(s);
-                // FIX TEST 25/30: Parsing intelligente del contenuto decifrato
+                // FIX: Gestione corretta dei tipi decifrati, specialmente NULL
+                if decrypted == "null" { return Value::Null; } 
                 if let Ok(i) = decrypted.parse::<i64>() { return Value::Integer(i); }
                 if let Ok(f) = decrypted.parse::<f64>() { return Value::Float(f); }
-                if let Ok(b) = decrypted.parse::<bool>() { return Value::Boolean(b); } // <--- FIX CRITICO
+                if let Ok(b) = decrypted.parse::<bool>() { return Value::Boolean(b); }
                 return Value::String(decrypted);
             }
         }
@@ -21,7 +22,6 @@ impl Interpreter {
         let r_res = self.resolve_value(right);
 
         match (l_res, r_res) {
-            // --- LOGICA INTERI ---
             (Value::Integer(a), Value::Integer(b)) => match operator {
                 "+" => Value::Integer(a + b), "-" => Value::Integer(a - b),
                 "*" => Value::Integer(a * b),
@@ -32,8 +32,6 @@ impl Interpreter {
                 "&&" => Value::Boolean(a != 0 && b != 0), "||" => Value::Boolean(a != 0 || b != 0),
                 _ => Value::Null,
             },
-
-            // --- LOGICA FLOAT ---
             (Value::Float(a), Value::Float(b)) => match operator {
                 "+" => Value::Float(a + b), "-" => Value::Float(a - b),
                 "*" => Value::Float(a * b),
@@ -43,48 +41,30 @@ impl Interpreter {
                 "==" => Value::Boolean(a == b), "!=" => Value::Boolean(a != b),
                 _ => Value::Null,
             },
-
-            // --- LOGICA BOOLEANA ---
             (Value::Boolean(a), Value::Boolean(b)) => match operator {
                 "&&" => Value::Boolean(a && b), "||" => Value::Boolean(a || b),
                 "==" => Value::Boolean(a == b), "!=" => Value::Boolean(a != b),
                 _ => { println!("TYPE ERROR: Invalid bool op"); Value::Null }
             },
-
-            // --- PROMOZIONE TIPI (Int <-> Float) ---
             (Value::Integer(a), Value::Float(b)) => self.eval_binary_op(Value::Float(a as f64), operator, Value::Float(b)),
             (Value::Float(a), Value::Integer(b)) => self.eval_binary_op(Value::Float(a), operator, Value::Float(b as f64)),
-
-            // --- LOGICA STRINGHE (Concatenazione e confronto Strict) ---
             (Value::String(a), Value::String(b)) => match operator {
-                "+" => Value::String(a + &b), 
-                "==" => Value::Boolean(a == b), 
-                "!=" => Value::Boolean(a != b),
+                "+" => Value::String(a + &b), "==" => Value::Boolean(a == b), "!=" => Value::Boolean(a != b),
                 _ => { println!("TYPE ERROR: Invalid string op"); Value::Null }
             },
-            
-            // FIX TEST 34: Strict Type Check per Stringhe vs Altro
             (Value::String(a), b) => match operator { 
                 "+" => Value::String(format!("{}{}", a, b)), 
-                "==" => Value::Boolean(false), // Tipi diversi = sempre falso
-                "!=" => Value::Boolean(true),  // Tipi diversi = sempre vero
+                "==" => Value::Boolean(false), "!=" => Value::Boolean(true), 
                 _ => Value::Null 
             },
             (a, Value::String(b)) => match operator { 
                 "+" => Value::String(format!("{}{}", a, b)), 
-                "==" => Value::Boolean(false),
-                "!=" => Value::Boolean(true),
+                "==" => Value::Boolean(false), "!=" => Value::Boolean(true), 
                 _ => Value::Null 
             },
-
-            // --- FALLBACK ERRORI (Gestione Strict Equality generica) ---
             (l, r) => match operator {
-                "==" => Value::Boolean(false), // Tipi incompatibili non sono uguali
-                "!=" => Value::Boolean(true),  // Tipi incompatibili sono diversi
-                _ => {
-                    println!("CRITICAL TYPE ERROR: Incompatible types for '{}': {:?} and {:?}", operator, l, r);
-                    Value::Null
-                }
+                "==" => Value::Boolean(false), "!=" => Value::Boolean(true),
+                _ => { println!("CRITICAL TYPE ERROR: Incompatible types for '{}': {:?} and {:?}", operator, l, r); Value::Null }
             }
         }
     }

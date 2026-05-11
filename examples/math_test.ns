@@ -1,7 +1,7 @@
 module MathTest;
 use IO {}
 
-func main() {
+func run_math_test() {
     IO.print("=== AVVIO MATH TEST v0.8.0 (40 Tests) ===");
     stract score = 0;
 

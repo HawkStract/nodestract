@@ -1,5 +1,8 @@
 use crate::engine::lexer::Token;
 
+pub mod expression;
+pub mod statement;
+
 pub struct Parser {
     pub tokens: Vec<Token>,
     pub position: usize,
@@ -13,9 +16,60 @@ impl Parser {
         }
     }
 
-    /// Parses the token stream and performs initial syntax validation.
+    /// Primary parse function coordinating validation and AST building
     pub fn parse(&mut self) -> Result<crate::engine::ast::Program, String> {
-        // 1. Validate that keywords are not used as variable or function names
+        // 1. Run syntactical structure and delimiter checks
+        self.pre_check()?;
+
+        // 2. Parse token stream into AST statements
+        self.position = 0;
+        let mut statements = Vec::new();
+        while self.position < self.tokens.len() && self.current_token() != &Token::EOF {
+            statements.push(self.parse_statement()?);
+        }
+
+        Ok(crate::engine::ast::Program { statements })
+    }
+
+    /// Access the current token
+    pub fn current_token(&self) -> &Token {
+        if self.position >= self.tokens.len() {
+            &Token::EOF
+        } else {
+            &self.tokens[self.position]
+        }
+    }
+
+    /// Peeks at the next token
+    pub fn peek(&self) -> &Token {
+        if self.position + 1 >= self.tokens.len() {
+            &Token::EOF
+        } else {
+            &self.tokens[self.position + 1]
+        }
+    }
+
+    /// Advances the position pointer
+    pub fn advance(&mut self) -> &Token {
+        if self.position < self.tokens.len() {
+            self.position += 1;
+        }
+        self.current_token()
+    }
+
+    /// Consumes a specific expected token or returns an error
+    pub fn consume(&mut self, expected: &Token, err_msg: &str) -> Result<(), String> {
+        if self.current_token() == expected {
+            self.advance();
+            Ok(())
+        } else {
+            Err(format!("Syntax Error: {} (found {:?}", err_msg, self.current_token()))
+        }
+    }
+
+    /// Per-parse checks for brackets, variable naming collisions, and structural blocks
+    fn pre_check(&self) -> Result<(), String> {
+        // Validate that keywords are not used as variable or function names
         for i in 0..self.tokens.len() {
             if let Token::Keyword(ref kw) = self.tokens[i] {
                 if kw == "let" || kw == "const" {
@@ -35,8 +89,7 @@ impl Parser {
             }
         }
 
-        // 2. Validate structural blocks: check for `Identifier ( ... ) {` without a preceding `function` keyword.
-        // This catches cases where unimported keywords (which become Identifiers) are used as control statements.
+        // Validate structural blocks: check for `Identifier ( ... ) {` without a preceding `function` keyword.
         for idx in 0..self.tokens.len() {
             if let Token::Delimiter(ref sym) = self.tokens[idx] {
                 if sym == "{" {
@@ -44,7 +97,6 @@ impl Parser {
                         let mut search_idx = idx - 1;
                         if let Token::Delimiter(ref close_paren) = self.tokens[search_idx] {
                             if close_paren == ")" {
-                                // Find matching '('
                                 let mut paren_stack = 1;
                                 while search_idx > 0 && paren_stack > 0 {
                                     search_idx -= 1;
@@ -57,10 +109,8 @@ impl Parser {
                                     }
                                 }
                                 if paren_stack == 0 && search_idx > 0 {
-                                    // Token before '('
                                     search_idx -= 1;
                                     if let Token::Identifier(_) = &self.tokens[search_idx] {
-                                        // Found `Identifier ( ... ) {` structure. Verify if preceded by `function` keyword.
                                         let mut is_function = false;
                                         if search_idx > 0 {
                                             if let Token::Keyword(ref kw) = &self.tokens[search_idx - 1] {
@@ -81,7 +131,7 @@ impl Parser {
             }
         }
 
-        // 3. Delimiter balancing check (brackets, braces, parentheses)
+        // Delimiter balancing check (brackets, braces, parentheses)
         let mut stack = Vec::new();
         for (idx, token) in self.tokens.iter().enumerate() {
             if let Token::Delimiter(ref sym) = token {
@@ -143,8 +193,6 @@ impl Parser {
             ));
         }
 
-        Ok(crate::engine::ast::Program {
-            statements: Vec::new(),
-        })
+        Ok(())
     }
 }

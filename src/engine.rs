@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_imports)]
 #[path = "lexer/lexer.rs"]
 pub mod lexer;
-#[path = "ast.rs"]
+#[path = "ast/ast.rs"]
 pub mod ast;
 #[path = "parser/parser.rs"]
 pub mod parser;

@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Statement {
@@ -7,11 +6,14 @@ pub enum Statement {
     IfStatement { condition: Expression, then_branch: Vec<Statement>, else_branch: Option<Vec<Statement>> },
     WhileStatement { condition: Expression, body: Vec<Statement> },
     ForStatement { iterator: String, start: Expression, end: Expression, body: Vec<Statement> },
+    SwitchStatement { discriminant: Expression, cases: Vec<(Expression, Vec<Statement>)>, default_case: Option<Vec<Statement>> },
     ReturnStatement { value: Expression },
     CapabilityUse { service: String, params: Vec<String> },
-    FunctionDecl { name: String, params: Vec<String>, body: Vec<Statement> },
-    Import { path: String },
+    FunctionDecl { is_async: bool, name: String, params: Vec<String>, body: Vec<Statement> },
+    TryCatchStatement { try_block: Vec<Statement>, catch_variable: Option<String>, catch_block: Vec<Statement>, finally_block: Option<Vec<Statement>> },
+    ThrowStatement { value: Expression },
     Break,
+    Continue,
     Expr(Expression),
 }
 
@@ -21,6 +23,7 @@ pub enum Expression {
     LiteralStr(String),
     LiteralNum(f64),
     LiteralBool(bool),
+    LiteralNull,
     Array(Vec<Expression>),
     Map(Vec<(String, Expression)>),
     Index { target: Box<Expression>, index: Box<Expression> },
@@ -29,6 +32,7 @@ pub enum Expression {
     UnaryOp { operator: String, operand: Box<Expression> },
     Ternary { condition: Box<Expression>, true_expr: Box<Expression>, false_expr: Box<Expression> },
     FunctionCall { target: String, args: Vec<Expression> },
+    Await(Box<Expression>),
 }
 
 #[derive(Debug, Clone)]

@@ -1,217 +1,325 @@
-use crate::engine::ast::{Program, Statement, Expression};
+use crate::engine::ast::{Statement, Expression};
 use crate::engine::lexer::Token;
 use super::Parser;
 
 impl Parser {
-    pub fn parse(&mut self) -> Program {
-        let mut statements = Vec::new();
-        while self.position < self.tokens.len() {
-            let token = self.current_token().clone();
-            match token {
-                Token::EOF => break,
-                Token::Use => statements.push(self.parse_capability()),
-                Token::Import => statements.push(self.parse_import()),
-                Token::Lock | Token::Stract | Token::Vault => {
-                    let is_mut = matches!(token, Token::Stract | Token::Vault);
-                    let is_sec = matches!(token, Token::Vault);
-                    statements.push(self.parse_var_decl(is_mut, is_sec));
-                },
-                Token::Func => statements.push(self.parse_function()),
-                Token::Module => { self.advance(); self.advance(); },
-                Token::Identifier(_) => statements.push(self.parse_identifier_stmt()),
-                Token::If => statements.push(self.parse_if_statement()),
-                Token::While => statements.push(self.parse_while_statement()),
-                Token::For => statements.push(self.parse_for_statement()),
-                Token::Return => statements.push(self.parse_return_statement()),
-                Token::Break => { self.advance(); statements.push(Statement::Break); },
-                _ => self.advance(),
-            }
-        }
-        Program { statements }
-    }
-
-    fn parse_import(&mut self) -> Statement {
-        self.advance(); 
-        let path = if let Token::StringLiteral(s) = self.current_token() { s.clone() } else { "Unknown".to_string() };
-        self.advance(); 
-        Statement::Import { path }
-    }
-
-    fn parse_identifier_stmt(&mut self) -> Statement {
-        let name = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "".to_string() };
-        
-        let next = self.peek();
-        match next {
-            Token::Equal => self.parse_assignment(),
-            Token::PlusPlus | Token::MinusMinus => {
-                let op = if next == &Token::PlusPlus { "+" } else { "-" };
-                self.advance(); 
-                self.advance(); 
-                Statement::Assignment {
-                    name: name.clone(),
-                    value: Expression::BinaryOp {
-                        left: Box::new(Expression::Variable(name)),
-                        operator: op.to_string(),
-                        right: Box::new(Expression::LiteralNum(1.0)),
+    /// Parses a single statement from the token stream
+    pub fn parse_statement(&mut self) -> Result<Statement, String> {
+        let token = self.current_token().clone();
+        match token {
+            Token::Keyword(ref kw) => {
+                match kw.as_str() {
+                    "let" | "const" => {
+                        let is_mut = kw == "let";
+                        self.parse_var_decl(is_mut, false)
+                    }
+                    "if" => self.parse_if_statement(),
+                    "while" => self.parse_while_statement(),
+                    "for" => self.parse_for_statement(),
+                    "switch" => self.parse_switch_statement(),
+                    "try" => self.parse_try_catch_statement(),
+                    "throw" => self.parse_throw_statement(),
+                    "break" => {
+                        self.advance();
+                        Ok(Statement::Break)
+                    }
+                    "continue" => {
+                        self.advance();
+                        Ok(Statement::Continue)
+                    }
+                    "return" => self.parse_return_statement(),
+                    "function" => self.parse_function(false),
+                    "async" => {
+                        self.advance(); // consume async
+                        self.consume(
+                            &Token::Keyword("function".to_string()),
+                            "Expected 'function' keyword after 'async'",
+                        )?;
+                        self.parse_function(true)
+                    }
+                    _ => {
+                        let expr = self.parse_expression()?;
+                        Ok(Statement::Expr(expr))
                     }
                 }
-            },
-            Token::PlusEqual | Token::MinusEqual | Token::StarEqual | Token::SlashEqual => {
-                let op = match next {
-                    Token::PlusEqual => "+", Token::MinusEqual => "-",
-                    Token::StarEqual => "*", Token::SlashEqual => "/",
-                    _ => "",
-                };
-                self.advance(); 
-                self.advance(); 
-                let right = self.parse_expression();
-                Statement::Assignment {
-                    name: name.clone(),
-                    value: Expression::BinaryOp {
-                        left: Box::new(Expression::Variable(name)),
-                        operator: op.to_string(),
-                        right: Box::new(right),
-                    }
-                }
-            },
-            _ => self.parse_func_call_stmt(),
-        }
-    }
-
-    fn parse_capability(&mut self) -> Statement {
-        self.advance();
-        let service_name = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "Unknown".to_string() };
-        self.advance();
-        let mut params = Vec::new();
-        if self.current_token() == &Token::LeftBrace {
-             self.advance();
-             while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF {
-                 if let Token::StringLiteral(s) = self.current_token() { params.push(s.clone()); }
-                 self.advance();
-             }
-             self.advance();
-        }
-        Statement::CapabilityUse { service: service_name, params }
-    }
-
-    fn parse_var_decl(&mut self, is_mutable: bool, is_secure: bool) -> Statement {
-        self.advance();
-        let name = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "Unknown".to_string() };
-        
-        let first = name.chars().next().unwrap_or(' ');
-        if !first.is_lowercase() && first != '_' {
-             println!("SYNTAX WARNING: Variable '{}' should start with lowercase or '_'.", name);
-        }
-
-        self.advance(); self.advance(); 
-        let value = self.parse_expression();
-        Statement::VarDecl { is_mutable, is_secure, name, value }
-    }
-
-    fn parse_function(&mut self) -> Statement {
-        self.advance();
-        let name = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "Anon".to_string() };
-        self.advance(); self.advance(); 
-        let mut params = Vec::new();
-        if self.current_token() != &Token::RightParen {
-            if let Token::Identifier(p) = self.current_token() { params.push(p.clone()); self.advance(); }
-            while self.current_token() == &Token::Comma {
-                self.advance();
-                if let Token::Identifier(p) = self.current_token() { params.push(p.clone()); self.advance(); }
+            }
+            Token::Identifier(_) => self.parse_identifier_statement(),
+            Token::EOF => Err("Syntax Error: Unexpected End Of File".to_string()),
+            _ => {
+                let expr = self.parse_expression()?;
+                Ok(Statement::Expr(expr))
             }
         }
-        self.advance(); self.advance();
-        let body = self.parse_block();
-        Statement::FunctionDecl { name, params, body }
     }
 
-    fn parse_block(&mut self) -> Vec<Statement> {
-        let mut body = Vec::new();
-        while self.current_token() != &Token::RightBrace && self.current_token() != &Token::EOF {
-            match self.current_token() {
-                Token::Stract | Token::Lock | Token::Vault => {
-                    let token = self.current_token().clone();
-                    let is_mut = matches!(token, Token::Stract | Token::Vault);
-                    let is_sec = matches!(token, Token::Vault);
-                    body.push(self.parse_var_decl(is_mut, is_sec));
-                },
-                Token::Return => body.push(self.parse_return_statement()),
-                Token::If => body.push(self.parse_if_statement()),
-                Token::While => body.push(self.parse_while_statement()),
-                Token::For => body.push(self.parse_for_statement()),
-                Token::Identifier(_) => body.push(self.parse_identifier_stmt()),
-                Token::Import => body.push(self.parse_import()),
-                Token::Break => { self.advance(); body.push(Statement::Break); },
-                _ => self.advance(),
-            }
-        }
+    fn parse_var_decl(&mut self, is_mutable: bool, is_secure: bool) -> Result<Statement, String> {
+        self.advance(); // consume let/const
+        let name = match self.current_token() {
+            Token::Identifier(s) => s.clone(),
+            _ => return Err("Expected identifier for variable name".to_string()),
+        };
         self.advance();
-        body
+        self.consume(&Token::Operator("=".to_string()), "Expected '=' after variable name")?;
+        let value = self.parse_expression()?;
+        Ok(Statement::VarDecl { is_mutable, is_secure, name, value })
     }
 
-    fn parse_if_statement(&mut self) -> Statement {
-        self.advance(); let condition = self.parse_expression();
-        while self.current_token() != &Token::LeftBrace { self.advance(); }
-        self.advance(); let then_branch = self.parse_block();
+    fn parse_if_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume if
+        let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
+        if has_paren {
+            self.advance();
+        }
+        let condition = self.parse_expression()?;
+        if has_paren {
+            self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after condition")?;
+        }
+        self.consume(&Token::Delimiter("{".to_string()), "Expected '{' before then branch")?;
+        let then_branch = self.parse_block()?;
         let mut else_branch = None;
-        if self.current_token() == &Token::Else {
-            self.advance();
-            if self.current_token() == &Token::If {
-                else_branch = Some(vec![self.parse_if_statement()]);
+        if self.current_token() == &Token::Keyword("else".to_string()) {
+            self.advance(); // consume else
+            if self.current_token() == &Token::Keyword("if".to_string()) {
+                else_branch = Some(vec![self.parse_if_statement()?]);
             } else {
-                while self.current_token() != &Token::LeftBrace { self.advance(); }
-                self.advance(); else_branch = Some(self.parse_block());
+                self.consume(&Token::Delimiter("{".to_string()), "Expected '{' before else branch")?;
+                else_branch = Some(self.parse_block()?);
             }
         }
-        Statement::IfStatement { condition, then_branch, else_branch }
+        Ok(Statement::IfStatement { condition, then_branch, else_branch })
     }
 
-    fn parse_while_statement(&mut self) -> Statement {
-        self.advance(); let condition = self.parse_expression();
-        while self.current_token() != &Token::LeftBrace { self.advance(); }
-        self.advance(); let body = self.parse_block();
-        Statement::WhileStatement { condition, body }
-    }
-
-    fn parse_for_statement(&mut self) -> Statement {
-        self.advance();
-        let iterator = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "i".to_string() };
-        self.advance();
-        let start = self.parse_primary(); 
-        let end = self.parse_primary();
-        while self.current_token() != &Token::LeftBrace { self.advance(); }
-        self.advance();
-        let body = self.parse_block();
-        Statement::ForStatement { iterator, start, end, body }
-    }
-
-    fn parse_return_statement(&mut self) -> Statement {
-        self.advance(); let value = self.parse_expression(); Statement::ReturnStatement { value }
-    }
-
-    fn parse_assignment(&mut self) -> Statement {
-        let name = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "Unknown".to_string() };
-        self.advance(); self.advance();
-        let value = self.parse_expression();
-        Statement::Assignment { name, value }
-    }
-
-    fn parse_func_call_stmt(&mut self) -> Statement {
-        let mut target = if let Token::Identifier(s) = self.current_token() { s.clone() } else { "".to_string() };
-        self.advance();
-        if self.current_token() == &Token::Dot {
+    fn parse_while_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume while
+        let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
+        if has_paren {
             self.advance();
-            if let Token::Identifier(method) = self.current_token() {
-                target = format!("{}.{}", target, method); self.advance();
+        }
+        let condition = self.parse_expression()?;
+        if has_paren {
+            self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after condition")?;
+        }
+        self.consume(&Token::Delimiter("{".to_string()), "Expected '{' before while body")?;
+        let body = self.parse_block()?;
+        Ok(Statement::WhileStatement { condition, body })
+    }
+
+    fn parse_for_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume for
+        let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
+        if has_paren {
+            self.advance();
+        }
+
+        let iterator = match self.current_token() {
+            Token::Identifier(s) => s.clone(),
+            _ => return Err("Expected identifier in for loop iterator".to_string()),
+        };
+        self.advance();
+
+        self.consume(&Token::Keyword("in".to_string()), "Expected 'in' keyword in for loop")?;
+        let start = self.parse_expression()?;
+
+        // Support optional range operator like '..'
+        let mut end = start.clone();
+        if let Token::Operator(ref op) = self.current_token() {
+            if op == ".." {
+                self.advance();
+                end = self.parse_expression()?;
             }
         }
-        self.advance(); 
-        let mut args = Vec::new();
-        if self.current_token() != &Token::RightParen {
-            args.push(self.parse_expression());
-            while self.current_token() == &Token::Comma { self.advance(); args.push(self.parse_expression()); }
+
+        if has_paren {
+            self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after for loop range")?;
         }
+        self.consume(&Token::Delimiter("{".to_string()), "Expected '{' before for body")?;
+        let body = self.parse_block()?;
+        Ok(Statement::ForStatement { iterator, start, end, body })
+    }
+
+    fn parse_switch_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume switch
+        let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
+        if has_paren {
+            self.advance();
+        }
+        let discriminant = self.parse_expression()?;
+        if has_paren {
+            self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after switch value")?;
+        }
+        self.consume(&Token::Delimiter("{".to_string()), "Expected '{' before switch block")?;
+
+        let mut cases = Vec::new();
+        let mut default_case = None;
+
+        while self.current_token() != &Token::Delimiter("}".to_string()) && self.current_token() != &Token::EOF {
+            match self.current_token() {
+                Token::Keyword(ref kw) if kw == "case" => {
+                    self.advance();
+                    let test = self.parse_expression()?;
+                    self.consume(&Token::Delimiter(":".to_string()), "Expected ':' after case value")?;
+                    let mut body = Vec::new();
+                    while self.current_token() != &Token::Keyword("case".to_string())
+                        && self.current_token() != &Token::Keyword("default".to_string())
+                        && self.current_token() != &Token::Delimiter("}".to_string())
+                        && self.current_token() != &Token::EOF
+                    {
+                        body.push(self.parse_statement()?);
+                    }
+                    cases.push((test, body));
+                }
+                Token::Keyword(ref kw) if kw == "default" => {
+                    self.advance();
+                    self.consume(&Token::Delimiter(":".to_string()), "Expected ':' after default")?;
+                    let mut body = Vec::new();
+                    while self.current_token() != &Token::Keyword("case".to_string())
+                        && self.current_token() != &Token::Keyword("default".to_string())
+                        && self.current_token() != &Token::Delimiter("}".to_string())
+                        && self.current_token() != &Token::EOF
+                    {
+                        body.push(self.parse_statement()?);
+                    }
+                    default_case = Some(body);
+                }
+                _ => {
+                    return Err(format!(
+                        "Expected 'case' or 'default' inside switch block, found {:?}",
+                        self.current_token()
+                    ));
+                }
+            }
+        }
+        self.consume(&Token::Delimiter("}".to_string()), "Expected '}' at end of switch block")?;
+        Ok(Statement::SwitchStatement { discriminant, cases, default_case })
+    }
+
+    fn parse_try_catch_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume try
+        self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'try'")?;
+        let try_block = self.parse_block()?;
+
+        let mut catch_variable = None;
+        let mut catch_block = Vec::new();
+
+        if self.current_token() == &Token::Keyword("catch".to_string()) {
+            self.advance(); // consume catch
+            let has_var_paren = self.current_token() == &Token::Delimiter("(".to_string());
+            if has_var_paren {
+                self.advance();
+                if let Token::Identifier(ref var) = self.current_token() {
+                    catch_variable = Some(var.clone());
+                    self.advance();
+                }
+                self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after catch variable")?;
+            }
+            self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'catch'")?;
+            catch_block = self.parse_block()?;
+        }
+
+        let mut finally_block = None;
+        if self.current_token() == &Token::Keyword("finally".to_string()) {
+            self.advance(); // consume finally
+            self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'finally'")?;
+            finally_block = Some(self.parse_block()?);
+        }
+
+        Ok(Statement::TryCatchStatement { try_block, catch_variable, catch_block, finally_block })
+    }
+
+    fn parse_throw_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume throw
+        let value = self.parse_expression()?;
+        Ok(Statement::ThrowStatement { value })
+    }
+
+    fn parse_return_statement(&mut self) -> Result<Statement, String> {
+        self.advance(); // consume return
+        let value = self.parse_expression()?;
+        Ok(Statement::ReturnStatement { value })
+    }
+
+    fn parse_function(&mut self, is_async: bool) -> Result<Statement, String> {
+        self.advance(); // consume function
+        let name = match self.current_token() {
+            Token::Identifier(s) => s.clone(),
+            _ => return Err("Expected identifier for function name".to_string()),
+        };
         self.advance();
-        Statement::Expr(Expression::FunctionCall { target, args })
+        self.consume(&Token::Delimiter("(".to_string()), "Expected '(' after function name")?;
+        let mut params = Vec::new();
+        if self.current_token() != &Token::Delimiter(")".to_string()) {
+            if let Token::Identifier(ref p) = self.current_token() {
+                params.push(p.clone());
+                self.advance();
+            }
+            while self.current_token() == &Token::Delimiter(",".to_string()) {
+                self.advance();
+                if let Token::Identifier(ref p) = self.current_token() {
+                    params.push(p.clone());
+                    self.advance();
+                }
+            }
+        }
+        self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after parameters")?;
+        self.consume(&Token::Delimiter("{".to_string()), "Expected '{' before function body")?;
+        let body = self.parse_block()?;
+        Ok(Statement::FunctionDecl { is_async, name, params, body })
+    }
+
+    fn parse_block(&mut self) -> Result<Vec<Statement>, String> {
+        let mut body = Vec::new();
+        while self.current_token() != &Token::Delimiter("}".to_string()) && self.current_token() != &Token::EOF {
+            body.push(self.parse_statement()?);
+        }
+        self.consume(&Token::Delimiter("}".to_string()), "Expected '}' at end of block")?;
+        Ok(body)
+    }
+
+    fn parse_identifier_statement(&mut self) -> Result<Statement, String> {
+        let name = match self.current_token() {
+            Token::Identifier(s) => s.clone(),
+            _ => unreachable!(),
+        };
+
+        let next = self.peek().clone();
+        match next {
+            Token::Operator(ref op) if op == "=" => {
+                self.advance(); // consume name
+                self.advance(); // consume =
+                let value = self.parse_expression()?;
+                Ok(Statement::Assignment { name, value })
+            }
+            Token::Operator(ref op) if op == "++" || op == "--" => {
+                let actual_op = if op == "++" { "+" } else { "-" };
+                self.advance(); // consume name
+                self.advance(); // consume ++/--
+                Ok(Statement::Assignment {
+                    name: name.clone(),
+                    value: Expression::BinaryOp {
+                        left: Box::new(Expression::Variable(name)),
+                        operator: actual_op.to_string(),
+                        right: Box::new(Expression::LiteralNum(1.0)),
+                    },
+                })
+            }
+            Token::Operator(ref op) if op == "+=" || op == "-=" || op == "*=" || op == "/=" => {
+                let actual_op = &op[0..1];
+                self.advance(); // consume name
+                self.advance(); // consume op
+                let right = self.parse_expression()?;
+                Ok(Statement::Assignment {
+                    name: name.clone(),
+                    value: Expression::BinaryOp {
+                        left: Box::new(Expression::Variable(name)),
+                        operator: actual_op.to_string(),
+                        right: Box::new(right),
+                    },
+                })
+            }
+            _ => {
+                let expr = self.parse_expression()?;
+                Ok(Statement::Expr(expr))
+            }
+        }
     }
 }

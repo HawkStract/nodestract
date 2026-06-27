@@ -3,183 +3,270 @@ use crate::engine::lexer::Token;
 use super::Parser;
 
 impl Parser {
-    pub fn parse_expression(&mut self) -> Expression {
+    pub fn parse_expression(&mut self) -> Result<Expression, String> {
         self.parse_ternary()
     }
 
-    fn parse_ternary(&mut self) -> Expression {
-        let mut expr = self.parse_logical_or();
-        if self.current_token() == &Token::Question {
+    fn parse_ternary(&mut self) -> Result<Expression, String> {
+        let mut expr = self.parse_logical_or()?;
+        if self.current_token() == &Token::Operator("?".to_string()) {
             self.advance();
-            let true_expr = self.parse_expression();
-            if self.current_token() == &Token::Colon {
+            let true_expr = self.parse_expression()?;
+            self.consume(&Token::Delimiter(":".to_string()), "Expected ':' in ternary expression")?;
+            let false_expr = self.parse_expression()?;
+            expr = Expression::Ternary {
+                condition: Box::new(expr),
+                true_expr: Box::new(true_expr),
+                false_expr: Box::new(false_expr),
+            };
+        }
+        Ok(expr)
+    }
+
+    fn parse_logical_or(&mut self) -> Result<Expression, String> {
+        let mut left = self.parse_logical_and()?;
+        while self.current_token() == &Token::Operator("||".to_string()) {
+            self.advance();
+            let right = self.parse_logical_and()?;
+            left = Expression::BinaryOp {
+                left: Box::new(left),
+                operator: "||".to_string(),
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    fn parse_logical_and(&mut self) -> Result<Expression, String> {
+        let mut left = self.parse_equality()?;
+        while self.current_token() == &Token::Operator("&&".to_string()) {
+            self.advance();
+            let right = self.parse_equality()?;
+            left = Expression::BinaryOp {
+                left: Box::new(left),
+                operator: "&&".to_string(),
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    fn parse_equality(&mut self) -> Result<Expression, String> {
+        let mut left = self.parse_comparison()?;
+        while let Token::Operator(ref op) = self.current_token() {
+            if op == "==" || op == "!=" {
+                let operator = op.clone();
                 self.advance();
-                let false_expr = self.parse_expression();
-                expr = Expression::Ternary {
-                    condition: Box::new(expr),
-                    true_expr: Box::new(true_expr),
-                    false_expr: Box::new(false_expr),
+                let right = self.parse_comparison()?;
+                left = Expression::BinaryOp {
+                    left: Box::new(left),
+                    operator,
+                    right: Box::new(right),
                 };
+            } else {
+                break;
             }
         }
-        expr
+        Ok(left)
     }
 
-    fn parse_logical_or(&mut self) -> Expression {
-        let mut left = self.parse_logical_and();
-        while self.current_token() == &Token::PipePipe {
-            self.advance();
-            let right = self.parse_logical_and();
-            left = Expression::BinaryOp { left: Box::new(left), operator: "||".to_string(), right: Box::new(right) };
+    fn parse_comparison(&mut self) -> Result<Expression, String> {
+        let mut left = self.parse_term()?;
+        while let Token::Operator(ref op) = self.current_token() {
+            if op == ">" || op == ">=" || op == "<" || op == "<=" {
+                let operator = op.clone();
+                self.advance();
+                let right = self.parse_term()?;
+                left = Expression::BinaryOp {
+                    left: Box::new(left),
+                    operator,
+                    right: Box::new(right),
+                };
+            } else {
+                break;
+            }
         }
-        left
+        Ok(left)
     }
 
-    fn parse_logical_and(&mut self) -> Expression {
-        let mut left = self.parse_equality();
-        while self.current_token() == &Token::AmperAmper {
-            self.advance();
-            let right = self.parse_equality();
-            left = Expression::BinaryOp { left: Box::new(left), operator: "&&".to_string(), right: Box::new(right) };
+    pub fn parse_term(&mut self) -> Result<Expression, String> {
+        let mut left = self.parse_factor()?;
+        while let Token::Operator(ref op) = self.current_token() {
+            if op == "+" || op == "-" {
+                let operator = op.clone();
+                self.advance();
+                let right = self.parse_factor()?;
+                left = Expression::BinaryOp {
+                    left: Box::new(left),
+                    operator,
+                    right: Box::new(right),
+                };
+            } else {
+                break;
+            }
         }
-        left
+        Ok(left)
     }
 
-    fn parse_equality(&mut self) -> Expression {
-        let mut left = self.parse_comparison();
-        while matches!(self.current_token(), Token::EqualEqual | Token::BangEqual) {
-            let operator = match self.current_token() {
-                Token::EqualEqual => "==".to_string(),
-                Token::BangEqual => "!=".to_string(),
-                _ => "".to_string(),
-            };
-            self.advance();
-            let right = self.parse_comparison();
-            left = Expression::BinaryOp { left: Box::new(left), operator, right: Box::new(right) };
+    pub fn parse_factor(&mut self) -> Result<Expression, String> {
+        let mut left = self.parse_unary()?;
+        while let Token::Operator(ref op) = self.current_token() {
+            if op == "*" || op == "/" {
+                let operator = op.clone();
+                self.advance();
+                let right = self.parse_unary()?;
+                left = Expression::BinaryOp {
+                    left: Box::new(left),
+                    operator,
+                    right: Box::new(right),
+                };
+            } else {
+                break;
+            }
         }
-        left
+        Ok(left)
     }
 
-    fn parse_comparison(&mut self) -> Expression {
-        let mut left = self.parse_term();
-        while matches!(self.current_token(), Token::Greater | Token::GreaterEqual | Token::Less | Token::LessEqual) {
-            let operator = match self.current_token() {
-                Token::Greater => ">".to_string(),
-                Token::GreaterEqual => ">=".to_string(),
-                Token::Less => "<".to_string(),
-                Token::LessEqual => "<=".to_string(),
-                _ => "".to_string(),
-            };
-            self.advance();
-            let right = self.parse_term();
-            left = Expression::BinaryOp { left: Box::new(left), operator, right: Box::new(right) };
-        }
-        left
-    }
-
-    pub fn parse_term(&mut self) -> Expression {
-        let mut left = self.parse_factor();
-        while matches!(self.current_token(), Token::Plus | Token::Minus) {
-            let operator = match self.current_token() {
-                Token::Plus => "+".to_string(), Token::Minus => "-".to_string(), _ => "".to_string(),
-            };
-            self.advance(); 
-            let right = self.parse_factor();
-            left = Expression::BinaryOp { left: Box::new(left), operator, right: Box::new(right) };
-        }
-        left
-    }
-
-    pub fn parse_factor(&mut self) -> Expression {
-        let mut left = self.parse_unary();
-        while matches!(self.current_token(), Token::Star | Token::Slash) {
-            let operator = match self.current_token() {
-                Token::Star => "*".to_string(), Token::Slash => "/".to_string(), _ => "".to_string(),
-            };
-            self.advance(); 
-            let right = self.parse_unary();
-            left = Expression::BinaryOp { left: Box::new(left), operator, right: Box::new(right) };
-        }
-        left
-    }
-
-    pub fn parse_unary(&mut self) -> Expression {
-        if matches!(self.current_token(), Token::Minus | Token::Bang) {
-            let operator = match self.current_token() {
-                Token::Minus => "-".to_string(),
-                Token::Bang => "!".to_string(),
-                _ => "".to_string(),
-            };
-            self.advance(); 
-            let operand = self.parse_unary();
-            return Expression::UnaryOp { operator, operand: Box::new(operand) };
+    pub fn parse_unary(&mut self) -> Result<Expression, String> {
+        if let Token::Operator(ref op) = self.current_token() {
+            if op == "-" || op == "!" {
+                let operator = op.clone();
+                self.advance();
+                let operand = self.parse_unary()?;
+                return Ok(Expression::UnaryOp {
+                    operator,
+                    operand: Box::new(operand),
+                });
+            }
         }
         self.parse_primary()
     }
 
-    pub fn parse_primary(&mut self) -> Expression {
-        match self.current_token() {
-            Token::True => { self.advance(); Expression::LiteralBool(true) }
-            Token::False => { self.advance(); Expression::LiteralBool(false) }
-            Token::LeftBracket => {
-                self.advance(); let mut elements = Vec::new();
-                if self.current_token() != &Token::RightBracket {
-                    elements.push(self.parse_expression());
-                    while self.current_token() == &Token::Comma { self.advance(); elements.push(self.parse_expression()); }
+    pub fn parse_primary(&mut self) -> Result<Expression, String> {
+        let token = self.current_token().clone();
+        match token {
+            Token::Keyword(ref kw) => {
+                if kw == "true" {
+                    self.advance();
+                    Ok(Expression::LiteralBool(true))
+                } else if kw == "false" {
+                    self.advance();
+                    Ok(Expression::LiteralBool(false))
+                } else if kw == "null" {
+                    self.advance();
+                    Ok(Expression::LiteralNull)
+                } else if kw == "await" {
+                    self.advance();
+                    let value = self.parse_unary()?;
+                    Ok(Expression::Await(Box::new(value)))
+                } else {
+                    // Try to parse as a built-in function or variable keyword (e.g. print, sin, etc.)
+                    self.parse_identifier_or_keyword_expr(kw.clone())
                 }
-                self.advance(); Expression::Array(elements)
             }
-            Token::LeftBrace => {
-                self.advance();
+            Token::Delimiter(ref sym) if sym == "[" => {
+                self.advance(); // consume [
+                let mut elements = Vec::new();
+                if self.current_token() != &Token::Delimiter("]".to_string()) {
+                    elements.push(self.parse_expression()?);
+                    while self.current_token() == &Token::Delimiter(",".to_string()) {
+                        self.advance();
+                        elements.push(self.parse_expression()?);
+                    }
+                }
+                self.consume(&Token::Delimiter("]".to_string()), "Expected ']' at end of array")?;
+                Ok(Expression::Array(elements))
+            }
+            Token::Delimiter(ref sym) if sym == "{" => {
+                self.advance(); // consume {
                 let mut pairs = Vec::new();
-                if self.current_token() != &Token::RightBrace {
+                if self.current_token() != &Token::Delimiter("}".to_string()) {
                     loop {
                         let key = match self.current_token() {
                             Token::StringLiteral(s) | Token::Identifier(s) => s.clone(),
-                            _ => "Unknown".to_string(),
+                            Token::Keyword(k) => k.clone(),
+                            _ => return Err("Expected string or identifier as key in map literal".to_string()),
                         };
                         self.advance();
-                        if self.current_token() == &Token::Colon { self.advance(); }
-                        let value = self.parse_expression();
+                        self.consume(&Token::Delimiter(":".to_string()), "Expected ':' after map key")?;
+                        let value = self.parse_expression()?;
                         pairs.push((key, value));
-                        if self.current_token() == &Token::Comma { self.advance(); } else { break; }
-                    }
-                }
-                self.advance(); Expression::Map(pairs)
-            }
-            Token::StringLiteral(s) => { let val = s.clone(); self.advance(); Expression::LiteralStr(val) }
-            Token::Number(n) => { let val = *n; self.advance(); Expression::LiteralNum(val) }
-            Token::Identifier(s) => {
-                let mut name = s.clone(); self.advance();
-                if self.current_token() == &Token::Dot {
-                    self.advance();
-                    if let Token::Identifier(method) = self.current_token() {
-                         name = format!("{}.{}", name, method); self.advance();
-                    }
-                }
-                let mut expr = Expression::Variable(name.clone());
-                loop {
-                    if self.current_token() == &Token::LeftBracket {
-                        self.advance(); let index = self.parse_expression(); self.advance();
-                        expr = Expression::Index { target: Box::new(expr), index: Box::new(index) };
-                    } else if self.current_token() == &Token::LeftParen {
-                        self.advance(); let mut args = Vec::new();
-                        if self.current_token() != &Token::RightParen {
-                            args.push(self.parse_expression());
-                            while self.current_token() == &Token::Comma { self.advance(); args.push(self.parse_expression()); }
+                        if self.current_token() == &Token::Delimiter(",".to_string()) {
+                            self.advance();
+                        } else {
+                            break;
                         }
-                        self.advance(); expr = Expression::FunctionCall { target: name.clone(), args };
-                    } else { break; }
+                    }
                 }
-                expr
+                self.consume(&Token::Delimiter("}".to_string()), "Expected '}' at end of map literal")?;
+                Ok(Expression::Map(pairs))
             }
-            Token::LeftParen => {
+            Token::StringLiteral(s) => {
                 self.advance();
-                let expr = self.parse_expression();
-                if self.current_token() == &Token::RightParen { self.advance(); }
-                expr
+                Ok(Expression::LiteralStr(s))
             }
-            _ => { self.advance(); Expression::LiteralStr("".to_string()) }
+            Token::Number(n) => {
+                self.advance();
+                Ok(Expression::LiteralNum(n))
+            }
+            Token::Identifier(s) => {
+                self.parse_identifier_or_keyword_expr(s)
+            }
+            Token::Delimiter(ref sym) if sym == "(" => {
+                self.advance();
+                let expr = self.parse_expression()?;
+                self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after parenthesized expression")?;
+                Ok(expr)
+            }
+            _ => Err(format!(
+                "Syntax Error: Unexpected token {:?} at start of expression",
+                self.current_token()
+            )),
         }
+    }
+
+    fn parse_identifier_or_keyword_expr(&mut self, name_str: String) -> Result<Expression, String> {
+        let mut name = name_str;
+        self.advance();
+
+        // Member access (dot notation)
+        if self.current_token() == &Token::Delimiter(".".to_string()) {
+            self.advance();
+            if let Token::Identifier(ref method) = self.current_token() {
+                name = format!("{}.{}", name, method);
+                self.advance();
+            }
+        }
+
+        let mut expr = Expression::Variable(name.clone());
+        loop {
+            if self.current_token() == &Token::Delimiter("[".to_string()) {
+                self.advance();
+                let index = self.parse_expression()?;
+                self.consume(&Token::Delimiter("]".to_string()), "Expected ']' after index")?;
+                expr = Expression::Index {
+                    target: Box::new(expr),
+                    index: Box::new(index),
+                };
+            } else if self.current_token() == &Token::Delimiter("(".to_string()) {
+                self.advance();
+                let mut args = Vec::new();
+                if self.current_token() != &Token::Delimiter(")".to_string()) {
+                    args.push(self.parse_expression()?);
+                    while self.current_token() == &Token::Delimiter(",".to_string()) {
+                        self.advance();
+                        args.push(self.parse_expression()?);
+                    }
+                }
+                self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after arguments")?;
+                expr = Expression::FunctionCall {
+                    target: name.clone(),
+                    args,
+                };
+            } else {
+                break;
+            }
+        }
+        Ok(expr)
     }
 }

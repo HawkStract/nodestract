@@ -1,9 +1,5 @@
 use crate::engine::lexer::Token;
 
-// Dichiariamo i moduli figli che si trovano nella cartella src/parser/
-pub mod statement;
-pub mod expression;
-
 pub struct Parser {
     pub tokens: Vec<Token>,
     pub position: usize,
@@ -17,24 +13,10 @@ impl Parser {
         }
     }
 
-    // Funzioni di utilità condivise
-    pub fn advance(&mut self) {
-        if self.position < self.tokens.len() {
-            self.position += 1;
+    /// Stub parsing method that returns an empty Program for now.
+    pub fn parse(&mut self) -> crate::engine::ast::Program {
+        crate::engine::ast::Program {
+            statements: Vec::new(),
         }
-    }
-
-    pub fn current_token(&self) -> &Token {
-        if self.position >= self.tokens.len() {
-            return &Token::EOF;
-        }
-        &self.tokens[self.position]
-    }
-    
-    pub fn peek(&self) -> &Token {
-        if self.position + 1 >= self.tokens.len() {
-            return &Token::EOF;
-        }
-        &self.tokens[self.position + 1]
     }
 }

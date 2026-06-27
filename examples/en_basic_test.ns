@@ -1,0 +1,46 @@
+import * from nio
+import * from nmath
+import * from nfs
+
+const MAX_LIMIT = 100
+let counter = 0
+let total = 0
+
+function calculate_square(x) {
+    let result = x * x
+    return result
+}
+
+function run_test() {
+    print("Starting basic English test...")
+    
+    while counter < 10 {
+        let value = counter + 1
+        let square = calculate_square(value)
+        print("Value:", value, "Square:", square)
+        
+        if square > 50 {
+            print("Square is greater than 50!")
+        } else {
+            print("Square is less than or equal to 50.")
+        }
+        
+        counter = counter + 1
+    }
+    
+    let is_done = true
+    if is_done {
+        print("Completed loop.")
+    }
+
+    let val = sin(3.14)
+    print("Sin value:", val)
+
+    let random_val = random()
+    print("Random value:", random_val)
+    
+    let content = read("test.txt")
+    print("File content:", content)
+}
+
+run_test()

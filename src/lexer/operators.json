@@ -1,0 +1,23 @@
+{
+  "==": "EqualEqual",
+  "!=": "BangEqual",
+  "++": "PlusPlus",
+  "+=": "PlusEqual",
+  "--": "MinusMinus",
+  "-=": "MinusEqual",
+  "*=": "StarEqual",
+  "/=": "SlashEqual",
+  ">=": "GreaterEqual",
+  "<=": "LessEqual",
+  "&&": "AmperAmper",
+  "||": "PipePipe",
+  "..": "Range",
+  "=": "Equal",
+  "!": "Bang",
+  "+": "Plus",
+  "-": "Minus",
+  "*": "Star",
+  "/": "Slash",
+  ">": "Greater",
+  "<": "Less"
+}

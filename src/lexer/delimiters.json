@@ -1,0 +1,12 @@
+{
+  "{": "LeftBrace",
+  "}": "RightBrace",
+  "(": "LeftParen",
+  ")": "RightParen",
+  "[": "LeftBracket",
+  "]": "RightBracket",
+  ",": "Comma",
+  ":": "Colon",
+  "?": "Question",
+  ".": "Dot"
+}

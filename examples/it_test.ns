@@ -1,0 +1,46 @@
+importa * da nio
+importa * da nmath
+importa * da nfs
+
+fissa MAX_LIMIT = 100
+crea contatore = 0
+crea totale = 0
+
+funzione calcola_quadrato(x) {
+    crea risultato = x * x
+    ritorna risultato
+}
+
+funzione esegui_test() {
+    stampa("Avvio del test di base in Italiano...")
+    
+    mentre contatore < 10 {
+        crea valore = contatore + 1
+        crea quadrato = calcola_quadrato(valore)
+        stampa("Valore:", valore, "Quadrato:", quadrato)
+        
+        se quadrato > 50 {
+            stampa("Il quadrato e maggiore di 50!")
+        } altrimenti {
+            stampa("Il quadrato e minore o uguale a 50.")
+        }
+        
+        contatore = contatore + 1
+    }
+    
+    crea completato = vero
+    se completato {
+        stampa("Ciclo completato.")
+    }
+
+    crea val = sen(3.14)
+    stampa("Valore Seno:", val)
+
+    crea valore_casuale = casuale()
+    stampa("Valore Casuale:", valore_casuale)
+    
+    crea contenuto = leggi("test.txt")
+    stampa("Contenuto file:", contenuto)
+}
+
+esegui_test()

@@ -1,9 +1,16 @@
+#[path = "lexer/lexer.rs"]
 pub mod lexer;
+#[path = "ast.rs"]
 pub mod ast;
+#[path = "parser.rs"]
 pub mod parser;
+#[path = "interpreter.rs"]
 pub mod interpreter;
+#[path = "value.rs"]
 pub mod value;
+#[path = "translate/translate.rs"]
 pub mod translate;
+#[path = "import/import.rs"]
 pub mod import;
 
 use self::lexer::Lexer;
@@ -39,24 +46,20 @@ impl Engine {
 
     /// Runs the complete NodeStract pipeline for a given source code.
     pub fn run(&mut self, source: &str) {
-        println!("[Engine] [1/4] Starting Lexer...");
+        println!("[Engine] [1/2] Starting Lexer...");
         let mut lexer = Lexer::new(source);
-        let tokens = lexer.tokenize(); 
+        let tokens = lexer.tokenize(&self.translation_engine); 
         println!("[Engine] Lexer completed. Generated {} tokens.", tokens.len());
 
-        println!("[Engine] [2/4] Starting Parser...");
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse();
-        println!("[Engine] Parser completed. AST successfully generated.");
-
-        println!("[Engine] [3/4] Processing imports & validation...");
-        // In the next phase, we'll walk the AST to extract and register active imports in import_manager
-
-        println!("[Engine] [4/4] Starting Execution...");
+        println!("[Engine] [2/2] Displaying Tokens:");
+        let token_reprs: Vec<String> = tokens
+            .iter()
+            .map(|t| t.to_string_repr())
+            .collect();
+        
         println!("--------------------------------------------------");
-        self.interpreter.run(ast);
+        println!("[ {} ]", token_reprs.join(" | "));
         println!("--------------------------------------------------");
-        println!("[Engine] Execution finished.");
     }
 
     /// Reads a file from disk and runs the compiler pipeline.

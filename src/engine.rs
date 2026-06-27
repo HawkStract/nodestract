@@ -1,8 +1,16 @@
-use crate::lexer::Lexer;
-use crate::parser::Parser;
-use crate::interpreter::Interpreter;
-use crate::translate::TranslationEngine;
-use crate::import::ImportManager;
+pub mod lexer;
+pub mod ast;
+pub mod parser;
+pub mod interpreter;
+pub mod value;
+pub mod translate;
+pub mod import;
+
+use self::lexer::Lexer;
+use self::parser::Parser;
+use self::interpreter::Interpreter;
+use self::translate::TranslationEngine;
+use self::import::ImportManager;
 
 pub struct Engine {
     pub translation_engine: TranslationEngine,

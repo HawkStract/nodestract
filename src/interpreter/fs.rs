@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::Path;
-use crate::value::Value;
+use crate::engine::value::Value;
 
 pub fn read_file(path: &str) -> Value {
     if !path.ends_with(".nso") && !path.ends_with(".txt") {

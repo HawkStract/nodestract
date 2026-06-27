@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::env;
-use crate::ast::{Program, Statement};
-use crate::value::Value;
+use crate::engine::ast::{Program, Statement};
+use crate::engine::value::Value;
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce};
 use aes_gcm::aead::rand_core::RngCore;
 
@@ -47,14 +47,14 @@ impl Interpreter {
     pub fn load_program(&mut self, program: Program) {
         for stmt in &program.statements {
             match stmt {
-                crate::ast::Statement::CapabilityUse { service, params } => { 
+                crate::engine::ast::Statement::CapabilityUse { service, params } => { 
                     if !self.capabilities.contains(service) { self.capabilities.push(service.clone()); }
                     if service == "FS" { for p in params { if !self.fs_allow_list.contains(p) { self.fs_allow_list.push(p.clone()); } } } 
                     else if service == "Net" { for p in params { if !self.net_allow_list.contains(p) { self.net_allow_list.push(p.clone()); } } }
                 },
-                crate::ast::Statement::FunctionDecl { name, .. } => { self.functions.insert(name.clone(), stmt.clone()); },
-                crate::ast::Statement::VarDecl { .. } => { self.execute_statement(stmt); },
-                crate::ast::Statement::Import { path } => { self.handle_import(path); },
+                crate::engine::ast::Statement::FunctionDecl { name, .. } => { self.functions.insert(name.clone(), stmt.clone()); },
+                crate::engine::ast::Statement::VarDecl { .. } => { self.execute_statement(stmt); },
+                crate::engine::ast::Statement::Import { path } => { self.handle_import(path); },
                 _ => {}
             }
         }
@@ -67,9 +67,9 @@ impl Interpreter {
             Err(_) => { println!("RUNTIME ERROR: Could not import module '{}'. File not found.", path); return; }
         };
         self.loaded_files.insert(path.to_string());
-        let mut lexer = crate::lexer::Lexer::new(&source);
+        let mut lexer = crate::engine::lexer::Lexer::new(&source);
         let tokens = lexer.tokenize();
-        let mut parser = crate::parser::Parser::new(tokens);
+        let mut parser = crate::engine::parser::Parser::new(tokens);
         let program = parser.parse();
         self.load_program(program);
     }
@@ -141,7 +141,7 @@ impl Interpreter {
     pub fn run(&mut self, program: Program) {
         self.load_program(program);
         if let Some(func_stmt) = self.functions.get("main").cloned() {
-            if let crate::ast::Statement::FunctionDecl { body, .. } = func_stmt {
+            if let crate::engine::ast::Statement::FunctionDecl { body, .. } = func_stmt {
                 for s in body { self.execute_statement(&s); }
             }
         }

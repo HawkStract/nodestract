@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_variables)]
 use crate::engine::lexer::Token;
 
 pub struct Parser {

@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_variables)]
 use crate::engine::ast::Program;
 
 pub struct Interpreter {}

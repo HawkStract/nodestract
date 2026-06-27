@@ -3,6 +3,7 @@ mod ast;
 mod parser;
 mod interpreter;
 mod value;
+mod translate;
 
 use std::env;
 use std::process;

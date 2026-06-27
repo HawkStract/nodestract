@@ -1,163 +1,286 @@
 use crate::engine::ast::{Statement, Expression};
 use crate::engine::value::Value;
 use super::{Interpreter, VarEntry};
+use std::collections::HashMap;
 use std::io::{self, Write};
+use std::thread;
+use std::time::Duration;
 use super::fs;
-use super::net; // <--- Import Net
+use super::net;
 
 impl Interpreter {
     pub fn handle_function_call(&mut self, target: &str, args: &Vec<Expression>) -> Value {
-        if target.contains(".") {
-            let service = target.split('.').next().unwrap_or("");
-            
-            // Check Capability
-            if !self.capabilities.contains(&service.to_string()) && service != "Sys" && service != "Array" {
-                println!("SECURITY ALERT: Capability '{}' blocked for '{}'. Execution Halted.", service, target);
-                std::process::exit(1);
+        match target {
+            // IO operations
+            "print" => {
+                let mut output = Vec::new();
+                for a in args {
+                    let val = self.eval_expression(a);
+                    output.push(Self::resolve_value_static(val).to_string());
+                }
+                println!("{}", output.join(" "));
+                let _ = io::stdout().flush();
+                Value::Null
+            }
+            "input" => {
+                if let Some(prompt_expr) = args.get(0) {
+                    let raw_prompt = self.eval_expression(prompt_expr);
+                    let p = Self::resolve_value_static(raw_prompt);
+                    print!("{}", p);
+                    let _ = io::stdout().flush();
+                }
+                let mut buffer = String::new();
+                if io::stdin().read_line(&mut buffer).is_ok() {
+                    Value::String(buffer.trim_end().to_string())
+                } else {
+                    Value::Null
+                }
             }
 
-            match target {
-                // ... (IO, Array, Sys rimangono identici - Copia e incolla dal vecchio file) ...
-                "IO.print" => {
-                    let output: Vec<String> = args.iter().map(|a| self.eval_expression(a).to_string()).collect();
-                    println!("{}", output.join(" "));
-                    let _ = io::stdout().flush();
-                    return Value::Null;
-                },
-                "IO.input" => {
-                    if let Some(prompt_expr) = args.get(0) {
-                        let raw_prompt = self.eval_expression(prompt_expr);
-                        let p = self.resolve_value(raw_prompt);
-                        print!("{}", p);
-                        io::stdout().flush().unwrap();
+            // File operations
+            "read" => {
+                if let Some(path_expr) = args.get(0) {
+                    let raw_path = self.eval_expression(path_expr);
+                    let path_val = Self::resolve_value_static(raw_path);
+                    fs::read_file(&path_val.to_string())
+                } else {
+                    Value::Null
+                }
+            }
+            "write" => {
+                if args.len() >= 2 {
+                    let raw_path = self.eval_expression(&args[0]);
+                    let path_val = Self::resolve_value_static(raw_path);
+                    let raw_content = self.eval_expression(&args[1]);
+                    let content_val = Self::resolve_value_static(raw_content);
+                    fs::write_file(&path_val.to_string(), &content_val.to_string())
+                } else {
+                    Value::Boolean(false)
+                }
+            }
+
+            // Math operations
+            "sin" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let num = match val {
+                        Value::Integer(i) => i as f64,
+                        Value::Float(f) => f,
+                        _ => 0.0,
+                    };
+                    Value::Float(num.sin())
+                } else {
+                    Value::Null
+                }
+            }
+            "cos" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let num = match val {
+                        Value::Integer(i) => i as f64,
+                        Value::Float(f) => f,
+                        _ => 0.0,
+                    };
+                    Value::Float(num.cos())
+                } else {
+                    Value::Null
+                }
+            }
+            "sqrt" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let num = match val {
+                        Value::Integer(i) => i as f64,
+                        Value::Float(f) => f,
+                        _ => 0.0,
+                    };
+                    Value::Float(num.sqrt())
+                } else {
+                    Value::Null
+                }
+            }
+            "random" => {
+                use rand::Rng;
+                Value::Float(rand::thread_rng().gen::<f64>())
+            }
+            "round" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let num = match val {
+                        Value::Integer(i) => return Value::Integer(i),
+                        Value::Float(f) => f.round() as i64,
+                        _ => 0,
+                    };
+                    Value::Integer(num)
+                } else {
+                    Value::Null
+                }
+            }
+            "min" => {
+                if args.len() >= 2 {
+                    let l = Self::resolve_value_static(self.eval_expression(&args[0]));
+                    let r = Self::resolve_value_static(self.eval_expression(&args[1]));
+                    match (l, r) {
+                        (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.min(b)),
+                        (Value::Float(a), Value::Float(b)) => Value::Float(a.min(b)),
+                        (Value::Integer(a), Value::Float(b)) => Value::Float((a as f64).min(b)),
+                        (Value::Float(a), Value::Integer(b)) => Value::Float(a.min(b as f64)),
+                        _ => Value::Null,
                     }
-                    let mut buffer = String::new();
-                    io::stdin().read_line(&mut buffer).unwrap();
-                    return Value::String(buffer.trim().to_string());
-                },
-                "Array.len" => {
-                    if let Some(arg) = args.get(0) {
-                        if let Value::Array(arr) = self.eval_expression(arg) { return Value::Integer(arr.len() as i64); }
+                } else {
+                    Value::Null
+                }
+            }
+            "max" => {
+                if args.len() >= 2 {
+                    let l = Self::resolve_value_static(self.eval_expression(&args[0]));
+                    let r = Self::resolve_value_static(self.eval_expression(&args[1]));
+                    match (l, r) {
+                        (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.max(b)),
+                        (Value::Float(a), Value::Float(b)) => Value::Float(a.max(b)),
+                        (Value::Integer(a), Value::Float(b)) => Value::Float((a as f64).max(b)),
+                        (Value::Float(a), Value::Integer(b)) => Value::Float(a.max(b as f64)),
+                        _ => Value::Null,
                     }
-                    return Value::Integer(0);
-                },
-                "Array.push" => {
-                    if args.len() >= 2 {
-                        let mut arr_val = self.eval_expression(&args[0]);
-                        let val_to_push = self.eval_expression(&args[1]);
-                        if let Value::Array(ref mut arr) = arr_val {
-                            arr.push(val_to_push);
-                            return Value::Array(arr.clone());
+                } else {
+                    Value::Null
+                }
+            }
+            "abs" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    match val {
+                        Value::Integer(i) => Value::Integer(i.abs()),
+                        Value::Float(f) => Value::Float(f.abs()),
+                        _ => Value::Null,
+                    }
+                } else {
+                    Value::Null
+                }
+            }
+            "log" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let num = match val {
+                        Value::Integer(i) => i as f64,
+                        Value::Float(f) => f,
+                        _ => 0.0,
+                    };
+                    Value::Float(num.ln())
+                } else {
+                    Value::Null
+                }
+            }
+            "pow" => {
+                if args.len() >= 2 {
+                    let base_val = Self::resolve_value_static(self.eval_expression(&args[0]));
+                    let exponent_val = Self::resolve_value_static(self.eval_expression(&args[1]));
+                    let base = match base_val {
+                        Value::Integer(i) => i as f64,
+                        Value::Float(f) => f,
+                        _ => 0.0,
+                    };
+                    let exponent = match exponent_val {
+                        Value::Integer(i) => i as f64,
+                        Value::Float(f) => f,
+                        _ => 0.0,
+                    };
+                    Value::Float(base.powf(exponent))
+                } else {
+                    Value::Null
+                }
+            }
+
+            // General utility operations
+            "len" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    match val {
+                        Value::Array(arr) => Value::Integer(arr.len() as i64),
+                        Value::String(s) => Value::Integer(s.len() as i64),
+                        Value::Map(m) => Value::Integer(m.len() as i64),
+                        _ => Value::Integer(0),
+                    }
+                } else {
+                    Value::Integer(0)
+                }
+            }
+            "sleep" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let secs = match val {
+                        Value::Integer(i) => i as u64,
+                        Value::Float(f) => f as u64,
+                        _ => 0,
+                    };
+                    thread::sleep(Duration::from_secs(secs));
+                }
+                Value::Null
+            }
+            "exit" => {
+                if let Some(arg) = args.get(0) {
+                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let code = match val {
+                        Value::Integer(i) => i as i32,
+                        Value::Float(f) => f as i32,
+                        _ => 0,
+                    };
+                    std::process::exit(code);
+                }
+                std::process::exit(0);
+            }
+
+            // Network operations
+            "fetch" => {
+                if let Some(url_expr) = args.get(0) {
+                    let raw_url = self.eval_expression(url_expr);
+                    let url_val = Self::resolve_value_static(raw_url);
+                    net::get(&url_val.to_string())
+                } else {
+                    Value::Null
+                }
+            }
+            "send" => {
+                if args.len() >= 2 {
+                    let raw_url = self.eval_expression(&args[0]);
+                    let url_val = Self::resolve_value_static(raw_url);
+                    let raw_body = self.eval_expression(&args[1]);
+                    let body_val = Self::resolve_value_static(raw_body);
+                    net::post(&url_val.to_string(), &body_val.to_string())
+                } else {
+                    Value::Null
+                }
+            }
+
+            // User-defined function call fallback
+            _ => {
+                if let Some(func_stmt) = self.functions.get(target).cloned() {
+                    if let Statement::FunctionDecl { params, body, .. } = func_stmt {
+                        let mut new_scope = HashMap::new();
+                        for (i, param_name) in params.iter().enumerate() {
+                            let arg_val = if i < args.len() {
+                                self.eval_expression(&args[i])
+                            } else {
+                                Value::Null
+                            };
+                            let entry = VarEntry { value: arg_val, is_mutable: true, is_secure: false };
+                            new_scope.insert(param_name.clone(), entry);
                         }
-                    }
-                    return Value::Null;
-                },
-                "Sys.memory_dump" => {
-                    if let Some(Expression::Variable(var_name)) = args.get(0) {
-                        let mut found = false;
-                        for scope in self.scopes.iter().rev() {
-                            if let Some(entry) = scope.get(var_name) {
-                                println!("[RAM DUMP] Variable '{}' -> {:?}", var_name, entry.value);
-                                found = true;
+                        self.scopes.push(new_scope);
+                        for s in body {
+                            self.execute_statement(&s);
+                            if self.last_return.is_some() || self.exception.is_some() {
                                 break;
                             }
                         }
-                        if !found { println!("[RAM DUMP] Variable '{}' -> <Not Found>", var_name); }
+                        self.scopes.pop();
+                        let result = self.last_return.clone().unwrap_or(Value::Null);
+                        self.last_return = None;
+                        return result;
                     }
-                    return Value::Null;
-                },
-                "FS.read" => {
-                    if let Some(path_expr) = args.get(0) {
-                        let raw_path = self.eval_expression(path_expr);
-                        let path_val = self.resolve_value(raw_path);
-                        let path_str = path_val.to_string();
-                        let allowed = self.fs_allow_list.iter().any(|prefix| path_str.starts_with(prefix));
-                        if !allowed {
-                            println!("FS SECURITY ALERT: Access denied to '{}'. Allowed: {:?}", path_str, self.fs_allow_list);
-                            return Value::Null;
-                        }
-                        return fs::read_file(&path_str);
-                    }
-                    return Value::Null;
-                },
-                "FS.write" => {
-                    if args.len() >= 2 {
-                        let raw_path = self.eval_expression(&args[0]);
-                        let path_val = self.resolve_value(raw_path);
-                        let raw_content = self.eval_expression(&args[1]);
-                        let content_val = self.resolve_value(raw_content);
-                        let path_str = path_val.to_string();
-                        let allowed = self.fs_allow_list.iter().any(|prefix| path_str.starts_with(prefix));
-                        if !allowed {
-                            println!("FS SECURITY ALERT: Write denied to '{}'. Allowed: {:?}", path_str, self.fs_allow_list);
-                            return Value::Boolean(false);
-                        }
-                        return fs::write_file(&path_str, &content_val.to_string());
-                    }
-                    return Value::Boolean(false);
-                },
-
-                // === NET MODULE (NUOVO) ===
-                "Net.get" => {
-                    if let Some(url_expr) = args.get(0) {
-                        let raw_url = self.eval_expression(url_expr);
-                        let url_val = self.resolve_value(raw_url);
-                        let url_str = url_val.to_string();
-
-                        // CHECK WHITELIST
-                        let allowed = self.net_allow_list.iter().any(|prefix| url_str.starts_with(prefix));
-                        if !allowed {
-                            println!("NET SECURITY ALERT: Call blocked to '{}'. Allowed: {:?}", url_str, self.net_allow_list);
-                            return Value::Null;
-                        }
-                        
-                        return net::get(&url_str);
-                    }
-                    return Value::Null;
-                },
-                "Net.post" => {
-                    if args.len() >= 2 {
-                        let raw_url = self.eval_expression(&args[0]);
-                        let url_val = self.resolve_value(raw_url);
-                        let raw_body = self.eval_expression(&args[1]);
-                        let body_val = self.resolve_value(raw_body);
-                        let url_str = url_val.to_string();
-
-                        // CHECK WHITELIST
-                        let allowed = self.net_allow_list.iter().any(|prefix| url_str.starts_with(prefix));
-                        if !allowed {
-                            println!("NET SECURITY ALERT: Call blocked to '{}'. Allowed: {:?}", url_str, self.net_allow_list);
-                            return Value::Null;
-                        }
-
-                        return net::post(&url_str, &body_val.to_string());
-                    }
-                    return Value::Null;
-                },
-
-                _ => { println!("RUNTIME WARNING: Unknown function target '{}'", target); }
+                }
+                Value::Null
             }
         }
-
-        if let Some(func_stmt) = self.functions.get(target).cloned() {
-            if let Statement::FunctionDecl { params, body, .. } = func_stmt {
-                let mut new_scope = std::collections::HashMap::new();
-                for (i, param_name) in params.iter().enumerate() {
-                    let arg_val = if i < args.len() { self.eval_expression(&args[i]) } else { Value::Null };
-                    let entry = VarEntry { value: arg_val, is_mutable: true, is_secure: false };
-                    new_scope.insert(param_name.clone(), entry);
-                }
-                self.scopes.push(new_scope);
-                for s in body {
-                    self.execute_statement(&s);
-                    if self.last_return.is_some() { break; }
-                }
-                self.scopes.pop();
-                let result = self.last_return.clone().unwrap_or(Value::Null);
-                self.last_return = None;
-                return result;
-            }
-        }
-        Value::Null
     }
 }

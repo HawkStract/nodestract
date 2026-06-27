@@ -5,7 +5,7 @@ pub mod lexer;
 pub mod ast;
 #[path = "parser/parser.rs"]
 pub mod parser;
-#[path = "interpreter.rs"]
+#[path = "interpreter/interpreter.rs"]
 pub mod interpreter;
 #[path = "value.rs"]
 pub mod value;
@@ -91,7 +91,7 @@ impl Engine {
         println!("[Engine] [3/3] Starting Parser (Syntax Validation)...");
         let mut parser = Parser::new(final_tokens.clone());
         match parser.parse() {
-            Ok(_) => {
+            Ok(program) => {
                 println!("[Engine] Syntax and imports are flawless! Displaying Tokens (stripped header):");
                 let token_reprs: Vec<String> = final_tokens
                     .iter()
@@ -101,6 +101,10 @@ impl Engine {
                 println!("--------------------------------------------------");
                 println!("[ {} ]", token_reprs.join(" | "));
                 println!("--------------------------------------------------");
+
+                println!("[Engine] Starting Runtime Interpreter...");
+                self.interpreter = Interpreter::new();
+                self.interpreter.run(program);
             }
             Err(err_msg) => {
                 crate::welcome::show_error(&format!("Syntax Error: {}", err_msg));

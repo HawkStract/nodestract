@@ -9,7 +9,7 @@ pub fn read_file(path: &str) -> Value {
     }
     match fs::read_to_string(path) {
         Ok(content) => Value::String(content),
-        Err(_) => Value::Null, // O gestire errore meglio in futuro
+        Err(_) => Value::Null,
     }
 }
 
@@ -19,9 +19,8 @@ pub fn write_file(path: &str, content: &str) -> Value {
         return Value::Boolean(false);
     }
     
-    // Assicurati che la directory esista (opzionale, ma utile)
     if let Some(parent) = Path::new(path).parent() {
-        if !parent.exists() {
+        if !parent.as_os_str().is_empty() && !parent.exists() {
             let _ = fs::create_dir_all(parent);
         }
     }

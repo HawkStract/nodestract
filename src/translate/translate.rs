@@ -103,6 +103,7 @@ mod tests {
         assert_eq!(engine.lookup("const"), Some("const"));
         assert_eq!(engine.lookup("fetch"), Some("fetch"));
         assert_eq!(engine.lookup("sin"), Some("sin"));
+        assert_eq!(engine.lookup("from"), Some("from"));
         assert_eq!(engine.lookup("not_a_keyword"), None);
         
         assert_eq!(engine.required_module("sin"), "nmath");

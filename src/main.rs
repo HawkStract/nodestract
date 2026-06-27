@@ -4,6 +4,7 @@ mod parser;
 mod interpreter;
 mod value;
 mod translate;
+mod import;
 
 use std::env;
 use std::process;

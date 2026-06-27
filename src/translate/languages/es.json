@@ -25,7 +25,7 @@
   "await": ["esperar", ""],
   "print": ["imprimir", "nio"],
   "input": ["ingresar", "nio"],
-  "typeof": ["tipo", ""],
+  "from": ["de", ""],
   "len": ["longitud", ""],
   "fetch": ["obtener", "nnet"],
   "connect": ["conectar", "nnet"],

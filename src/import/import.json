@@ -1,0 +1,7 @@
+{
+  "translate": ["en", "it", "es", "fr", "de", "pt", "ro"],
+  "nio": ["print", "input"],
+  "nfs": ["open", "read", "write", "delete"],
+  "nnet": ["fetch", "connect", "send", "receive"],
+  "nmath": ["sin", "cos", "sqrt", "random", "round", "min", "max", "abs", "log", "pow"]
+}

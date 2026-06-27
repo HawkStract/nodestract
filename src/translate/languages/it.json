@@ -25,7 +25,7 @@
   "await": ["attendi", ""],
   "print": ["stampa", "nio"],
   "input": ["inserisci", "nio"],
-  "typeof": ["tipo", ""],
+  "from": ["da", ""],
   "len": ["lunghezza", ""],
   "fetch": ["scarica", "nnet"],
   "connect": ["connetti", "nnet"],

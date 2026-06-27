@@ -25,7 +25,7 @@
   "await": ["warte", ""],
   "print": ["ausgeben", "nio"],
   "input": ["eingeben", "nio"],
-  "typeof": ["typ", ""],
+  "from": ["aus", ""],
   "len": ["laenge", ""],
   "fetch": ["hole", "nnet"],
   "connect": ["verbinde", "nnet"],

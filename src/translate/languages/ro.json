@@ -25,7 +25,7 @@
   "await": ["asteapta", ""],
   "print": ["afiseaza", "nio"],
   "input": ["citeste", "nio"],
-  "typeof": ["tip", ""],
+  "from": ["din", ""],
   "len": ["lungime", ""],
   "fetch": ["descarca", "nnet"],
   "connect": ["conecteaza", "nnet"],

@@ -9,9 +9,9 @@ impl Interpreter {
         }
 
         match stmt {
-            Statement::VarDecl { name, value, is_mutable, is_secure } => {
+            Statement::VarDecl { name, value, is_mutable } => {
                 let val = self.eval_expression(value);
-                self.define_var(name.clone(), val, *is_mutable, *is_secure);
+                self.define_var(name.clone(), val, *is_mutable);
             }
             Statement::Assignment { name, value } => {
                 let val = self.eval_expression(value);
@@ -19,9 +19,7 @@ impl Interpreter {
             }
             Statement::IfStatement { condition, then_branch, else_branch } => {
                 let raw_cond = self.eval_expression(condition);
-                let cond_val = self.resolve_value(raw_cond);
-
-                if cond_val.is_truthy() {
+                if raw_cond.is_truthy() {
                     self.enter_scope();
                     for s in then_branch {
                         self.execute_statement(s);
@@ -44,8 +42,7 @@ impl Interpreter {
             Statement::WhileStatement { condition, body } => {
                 loop {
                     let raw_cond = self.eval_expression(condition);
-                    let cond_val = self.resolve_value(raw_cond);
-                    if !cond_val.is_truthy() {
+                    if !raw_cond.is_truthy() {
                         break;
                     }
 
@@ -70,10 +67,8 @@ impl Interpreter {
                 }
             }
             Statement::ForStatement { iterator, start, end, body } => {
-                let raw_start = self.eval_expression(start);
-                let start_val = self.resolve_value(raw_start);
-                let raw_end = self.eval_expression(end);
-                let end_val = self.resolve_value(raw_end);
+                let start_val = self.eval_expression(start);
+                let end_val = self.eval_expression(end);
 
                 let start_int = match start_val {
                     Value::Integer(i) => i,
@@ -88,7 +83,7 @@ impl Interpreter {
 
                 for i in start_int..end_int {
                     self.enter_scope();
-                    self.define_var(iterator.clone(), Value::Integer(i), false, false);
+                    self.define_var(iterator.clone(), Value::Integer(i), false);
                     for s in body {
                         self.execute_statement(s);
                         if self.last_return.is_some() || self.exception.is_some() {
@@ -109,12 +104,10 @@ impl Interpreter {
                 }
             }
             Statement::SwitchStatement { discriminant, cases, default_case } => {
-                let raw_disc = self.eval_expression(discriminant);
-                let disc_val = self.resolve_value(raw_disc);
+                let disc_val = self.eval_expression(discriminant);
                 let mut matched = false;
                 for (test_expr, body) in cases {
-                    let raw_test = self.eval_expression(test_expr);
-                    let test_val = self.resolve_value(raw_test);
+                    let test_val = self.eval_expression(test_expr);
                     if disc_val == test_val {
                         matched = true;
                         self.enter_scope();
@@ -154,7 +147,7 @@ impl Interpreter {
                 if let Some(exc) = self.exception.take() {
                     self.enter_scope();
                     if let Some(ref var_name) = catch_variable {
-                        self.define_var(var_name.clone(), exc, false, false);
+                        self.define_var(var_name.clone(), exc, false);
                     }
                     for s in catch_block {
                         self.execute_statement(s);

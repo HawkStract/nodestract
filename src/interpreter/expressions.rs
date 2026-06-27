@@ -30,8 +30,7 @@ impl Interpreter {
             Expression::Variable(name) => self.get_var(name),
             Expression::Index { target, index } => {
                 let target_val = self.eval_expression(target);
-                let raw_index = self.eval_expression(index);
-                let index_val = self.resolve_value(raw_index);
+                let index_val = self.eval_expression(index);
 
                 match target_val {
                     Value::Array(arr) => {
@@ -60,8 +59,7 @@ impl Interpreter {
                 self.eval_binary_op(l, operator, r)
             }
             Expression::UnaryOp { operator, operand } => {
-                let raw_val = self.eval_expression(operand);
-                let val = self.resolve_value(raw_val);
+                let val = self.eval_expression(operand);
                 match operator.as_str() {
                     "!" => Value::Boolean(!val.is_truthy()),
                     "-" => match val {
@@ -73,8 +71,7 @@ impl Interpreter {
                 }
             }
             Expression::Ternary { condition, true_expr, false_expr } => {
-                let raw_cond = self.eval_expression(condition);
-                let cond_val = self.resolve_value(raw_cond);
+                let cond_val = self.eval_expression(condition);
                 if cond_val.is_truthy() {
                     self.eval_expression(true_expr)
                 } else {

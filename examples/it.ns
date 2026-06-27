@@ -1,8 +1,5 @@
 importa italiano da translate
-/*TODO: dovrei importare la stampa scrivendo "importa stampa da nio" per utilizzare la traduzione di print senza dare errore
-Per ora lo faccio senza problemi in inglese importando temporaneamente anche la lingua inglese*/
-import print from nio 
-import english from translate
+importa stampa da nio
 
 crea raggio = 15
 fissa PI_GRECO = 3.14159265359
@@ -13,7 +10,7 @@ stampa(PI_GRECO)
 raggio = 10
 PI_GRECO = 3.14
 
-stampa("Raggio ", raggio, ", PI ",  PI_GRECO) 
+stampa("Raggio:", raggio, ", PI:",  PI_GRECO) 
 //TO DO: tra una stampa e l'altra vedo il doppio spazio: [Raggio  10 , PI  3.14159265359], bisogna aggiustare il separatore, inoltre nella stampa non funziona il ":"
 stampa (raggio)
 /*Test

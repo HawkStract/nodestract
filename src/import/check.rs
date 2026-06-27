@@ -92,7 +92,7 @@ pub fn validate_imports(
 
             // Translate member to its canonical English form (e.g. "italiano" -> "italian")
             let canonical_member = translation_engine
-                .lookup(member, &temp_manager)
+                .lookup_import(member, parent, &import_manager)
                 .unwrap_or(member);
 
             // Register import in ImportManager

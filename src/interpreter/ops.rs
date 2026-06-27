@@ -2,37 +2,8 @@ use crate::engine::value::Value;
 use super::Interpreter;
 
 impl Interpreter {
-    pub fn resolve_value(&self, val: Value) -> Value {
-        Self::resolve_value_static(val)
-    }
-
-    pub fn resolve_value_static(val: Value) -> Value {
-        if let Value::String(ref s) = val {
-            if s.starts_with("ENC:") {
-                let decrypted = Self::decrypt_vault(s);
-                if decrypted == "null" {
-                    return Value::Null;
-                }
-                if let Ok(i) = decrypted.parse::<i64>() {
-                    return Value::Integer(i);
-                }
-                if let Ok(f) = decrypted.parse::<f64>() {
-                    return Value::Float(f);
-                }
-                if let Ok(b) = decrypted.parse::<bool>() {
-                    return Value::Boolean(b);
-                }
-                return Value::String(decrypted);
-            }
-        }
-        val
-    }
-
     pub fn eval_binary_op(&self, left: Value, operator: &str, right: Value) -> Value {
-        let l_res = Self::resolve_value_static(left);
-        let r_res = Self::resolve_value_static(right);
-
-        match (l_res, r_res) {
+        match (left, right) {
             (Value::Null, Value::Null) => match operator {
                 "==" => Value::Boolean(true),
                 "!=" => Value::Boolean(false),

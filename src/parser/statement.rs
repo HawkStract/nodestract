@@ -11,7 +11,7 @@ impl Parser {
                 match kw.as_str() {
                     "let" | "const" => {
                         let is_mut = kw == "let";
-                        self.parse_var_decl(is_mut, false)
+                        self.parse_var_decl(is_mut)
                     }
                     "if" => self.parse_if_statement(),
                     "while" => self.parse_while_statement(),
@@ -52,7 +52,7 @@ impl Parser {
         }
     }
 
-    fn parse_var_decl(&mut self, is_mutable: bool, is_secure: bool) -> Result<Statement, String> {
+    fn parse_var_decl(&mut self, is_mutable: bool) -> Result<Statement, String> {
         self.advance(); // consume let/const
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
@@ -61,7 +61,7 @@ impl Parser {
         self.advance();
         self.consume(&Token::Operator("=".to_string()), "Expected '=' after variable name")?;
         let value = self.parse_expression()?;
-        Ok(Statement::VarDecl { is_mutable, is_secure, name, value })
+        Ok(Statement::VarDecl { is_mutable, name, value })
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, String> {

@@ -14,7 +14,7 @@ impl FilteredEngine {
         let mut active_keywords = HashMap::new();
 
         for (normalized_word, candidates) in &translation.keyword_map {
-            for (canonical, module) in candidates {
+            for (canonical, module, language) in candidates {
                 // 1. Automatically disable core bootstrap keywords and language names
                 if canonical == "import"
                     || canonical == "from"
@@ -30,15 +30,15 @@ impl FilteredEngine {
                 }
 
                 // 2. Keep keyword if its language module is active
-                if module == "english"
-                    || module == "italian"
-                    || module == "spanish"
-                    || module == "french"
-                    || module == "german"
-                    || module == "portuguese"
-                    || module == "romanian"
+                if language == "english"
+                    || language == "italian"
+                    || language == "spanish"
+                    || language == "french"
+                    || language == "german"
+                    || language == "portuguese"
+                    || language == "romanian"
                 {
-                    if import_manager.is_member_active(module, "translate") {
+                    if import_manager.is_member_active(language, "translate") {
                         active_keywords.insert(normalized_word.clone(), canonical.clone());
                     }
                 }

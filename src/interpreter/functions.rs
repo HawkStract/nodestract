@@ -13,20 +13,29 @@ impl Interpreter {
         match target {
             // IO operations
             "print" => {
-                let mut output = Vec::new();
-                for a in args {
+                let mut output = String::new();
+                for (i, a) in args.iter().enumerate() {
                     let val = self.eval_expression(a);
-                    output.push(Self::resolve_value_static(val).to_string());
+                    let val_str = val.to_string();
+                    if i > 0 {
+                        let prev_ends_space = output.ends_with(|c: char| c.is_whitespace());
+                        let next_starts_space_or_punct = val_str.starts_with(|c: char| {
+                            c.is_whitespace() || c == ',' || c == ':' || c == ';' || c == '.'
+                        });
+                        if !prev_ends_space && !next_starts_space_or_punct {
+                            output.push(' ');
+                        }
+                    }
+                    output.push_str(&val_str);
                 }
-                println!("{}", output.join(" "));
+                println!("{}", output);
                 let _ = io::stdout().flush();
                 Value::Null
             }
             "input" => {
                 if let Some(prompt_expr) = args.get(0) {
                     let raw_prompt = self.eval_expression(prompt_expr);
-                    let p = Self::resolve_value_static(raw_prompt);
-                    print!("{}", p);
+                    print!("{}", raw_prompt);
                     let _ = io::stdout().flush();
                 }
                 let mut buffer = String::new();
@@ -40,8 +49,7 @@ impl Interpreter {
             // File operations
             "read" => {
                 if let Some(path_expr) = args.get(0) {
-                    let raw_path = self.eval_expression(path_expr);
-                    let path_val = Self::resolve_value_static(raw_path);
+                    let path_val = self.eval_expression(path_expr);
                     fs::read_file(&path_val.to_string())
                 } else {
                     Value::Null
@@ -49,10 +57,8 @@ impl Interpreter {
             }
             "write" => {
                 if args.len() >= 2 {
-                    let raw_path = self.eval_expression(&args[0]);
-                    let path_val = Self::resolve_value_static(raw_path);
-                    let raw_content = self.eval_expression(&args[1]);
-                    let content_val = Self::resolve_value_static(raw_content);
+                    let path_val = self.eval_expression(&args[0]);
+                    let content_val = self.eval_expression(&args[1]);
                     fs::write_file(&path_val.to_string(), &content_val.to_string())
                 } else {
                     Value::Boolean(false)
@@ -62,7 +68,7 @@ impl Interpreter {
             // Math operations
             "sin" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let num = match val {
                         Value::Integer(i) => i as f64,
                         Value::Float(f) => f,
@@ -75,7 +81,7 @@ impl Interpreter {
             }
             "cos" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let num = match val {
                         Value::Integer(i) => i as f64,
                         Value::Float(f) => f,
@@ -88,7 +94,7 @@ impl Interpreter {
             }
             "sqrt" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let num = match val {
                         Value::Integer(i) => i as f64,
                         Value::Float(f) => f,
@@ -105,7 +111,7 @@ impl Interpreter {
             }
             "round" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let num = match val {
                         Value::Integer(i) => return Value::Integer(i),
                         Value::Float(f) => f.round() as i64,
@@ -118,8 +124,8 @@ impl Interpreter {
             }
             "min" => {
                 if args.len() >= 2 {
-                    let l = Self::resolve_value_static(self.eval_expression(&args[0]));
-                    let r = Self::resolve_value_static(self.eval_expression(&args[1]));
+                    let l = self.eval_expression(&args[0]);
+                    let r = self.eval_expression(&args[1]);
                     match (l, r) {
                         (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.min(b)),
                         (Value::Float(a), Value::Float(b)) => Value::Float(a.min(b)),
@@ -133,8 +139,8 @@ impl Interpreter {
             }
             "max" => {
                 if args.len() >= 2 {
-                    let l = Self::resolve_value_static(self.eval_expression(&args[0]));
-                    let r = Self::resolve_value_static(self.eval_expression(&args[1]));
+                    let l = self.eval_expression(&args[0]);
+                    let r = self.eval_expression(&args[1]);
                     match (l, r) {
                         (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.max(b)),
                         (Value::Float(a), Value::Float(b)) => Value::Float(a.max(b)),
@@ -148,7 +154,7 @@ impl Interpreter {
             }
             "abs" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     match val {
                         Value::Integer(i) => Value::Integer(i.abs()),
                         Value::Float(f) => Value::Float(f.abs()),
@@ -160,7 +166,7 @@ impl Interpreter {
             }
             "log" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let num = match val {
                         Value::Integer(i) => i as f64,
                         Value::Float(f) => f,
@@ -173,8 +179,8 @@ impl Interpreter {
             }
             "pow" => {
                 if args.len() >= 2 {
-                    let base_val = Self::resolve_value_static(self.eval_expression(&args[0]));
-                    let exponent_val = Self::resolve_value_static(self.eval_expression(&args[1]));
+                    let base_val = self.eval_expression(&args[0]);
+                    let exponent_val = self.eval_expression(&args[1]);
                     let base = match base_val {
                         Value::Integer(i) => i as f64,
                         Value::Float(f) => f,
@@ -194,7 +200,7 @@ impl Interpreter {
             // General utility operations
             "len" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     match val {
                         Value::Array(arr) => Value::Integer(arr.len() as i64),
                         Value::String(s) => Value::Integer(s.len() as i64),
@@ -207,7 +213,7 @@ impl Interpreter {
             }
             "sleep" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let secs = match val {
                         Value::Integer(i) => i as u64,
                         Value::Float(f) => f as u64,
@@ -219,7 +225,7 @@ impl Interpreter {
             }
             "exit" => {
                 if let Some(arg) = args.get(0) {
-                    let val = Self::resolve_value_static(self.eval_expression(arg));
+                    let val = self.eval_expression(arg);
                     let code = match val {
                         Value::Integer(i) => i as i32,
                         Value::Float(f) => f as i32,
@@ -233,8 +239,7 @@ impl Interpreter {
             // Network operations
             "fetch" => {
                 if let Some(url_expr) = args.get(0) {
-                    let raw_url = self.eval_expression(url_expr);
-                    let url_val = Self::resolve_value_static(raw_url);
+                    let url_val = self.eval_expression(url_expr);
                     net::get(&url_val.to_string())
                 } else {
                     Value::Null
@@ -242,10 +247,8 @@ impl Interpreter {
             }
             "send" => {
                 if args.len() >= 2 {
-                    let raw_url = self.eval_expression(&args[0]);
-                    let url_val = Self::resolve_value_static(raw_url);
-                    let raw_body = self.eval_expression(&args[1]);
-                    let body_val = Self::resolve_value_static(raw_body);
+                    let url_val = self.eval_expression(&args[0]);
+                    let body_val = self.eval_expression(&args[1]);
                     net::post(&url_val.to_string(), &body_val.to_string())
                 } else {
                     Value::Null
@@ -263,7 +266,7 @@ impl Interpreter {
                             } else {
                                 Value::Null
                             };
-                            let entry = VarEntry { value: arg_val, is_mutable: true, is_secure: false };
+                            let entry = VarEntry { value: arg_val, is_mutable: true };
                             new_scope.insert(param_name.clone(), entry);
                         }
                         self.scopes.push(new_scope);

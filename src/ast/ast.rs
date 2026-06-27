@@ -1,7 +1,7 @@
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Statement {
-    VarDecl { is_mutable: bool, is_secure: bool, name: String, value: Expression },
+    VarDecl { is_mutable: bool, name: String, value: Expression },
     Assignment { name: String, value: Expression },
     IfStatement { condition: Expression, then_branch: Vec<Statement>, else_branch: Option<Vec<Statement>> },
     WhileStatement { condition: Expression, body: Vec<Statement> },

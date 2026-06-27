@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 pub struct TranslationEngine {
-    // Maps lowercase, accent-normalized keywords to a list of (canonical, dependency) candidates to support homonyms across languages
-    pub(crate) keyword_map: HashMap<String, Vec<(String, String)>>,
+    // Maps lowercase, accent-normalized keywords to a list of (canonical, module, language) candidates
+    pub(crate) keyword_map: HashMap<String, Vec<(String, String, String)>>,
     // Maps canonical keywords to their required import module
     module_map: HashMap<String, String>,
 }
@@ -14,7 +14,6 @@ impl TranslationEngine {
             keyword_map: HashMap::new(),
             module_map: HashMap::new(),
         };
-        // Load all supported languages simultaneously
         engine.load_language("en");
         engine.load_language("it");
         engine.load_language("es");
@@ -42,38 +41,40 @@ impl TranslationEngine {
         }
 
         if let Ok(map) = serde_json::from_str::<HashMap<String, (String, String)>>(json_content) {
-            for (canonical_kw, (translation, mut module)) in map {
+            let lang_name = match lang {
+                "en" => "english",
+                "it" => "italian",
+                "es" => "spanish",
+                "fr" => "french",
+                "de" => "german",
+                "pt" => "portuguese",
+                "ro" => "romanian",
+                other => other,
+            }.to_string();
+
+            for (canonical_kw, (translation, module)) in map {
                 let normalized = self.normalize(&translation);
                 
-                // Dynamically assign the language name as the dependency module for language keywords.
-                // Do NOT assign it for "import", "from", or the language names themselves (they are bootstrap members).
-                if module.is_empty() 
-                    && canonical_kw != "import" 
-                    && canonical_kw != "from"
-                    && canonical_kw != "english"
-                    && canonical_kw != "italian"
-                    && canonical_kw != "spanish"
-                    && canonical_kw != "french"
-                    && canonical_kw != "german"
-                    && canonical_kw != "portuguese"
-                    && canonical_kw != "romanian"
-                {
-                    module = match lang {
-                        "en" => "english",
-                        "it" => "italian",
-                        "es" => "spanish",
-                        "fr" => "french",
-                        "de" => "german",
-                        "pt" => "portuguese",
-                        "ro" => "romanian",
-                        other => other,
-                    }.to_string();
-                }
+                // Core bootstrap keywords and language names have no language dependency (always active for bootstrap)
+                let is_bootstrap = canonical_kw == "import" 
+                    || canonical_kw == "from"
+                    || canonical_kw == "english"
+                    || canonical_kw == "italian"
+                    || canonical_kw == "spanish"
+                    || canonical_kw == "french"
+                    || canonical_kw == "german"
+                    || canonical_kw == "portuguese"
+                    || canonical_kw == "romanian";
+
+                let dep_lang = if is_bootstrap {
+                    "".to_string()
+                } else {
+                    lang_name.clone()
+                };
 
                 let candidates = self.keyword_map.entry(normalized).or_insert_with(Vec::new);
-                // Only push if not already present
-                if !candidates.iter().any(|(c, m)| c == &canonical_kw && m == &module) {
-                    candidates.push((canonical_kw.clone(), module.clone()));
+                if !candidates.iter().any(|(c, m, l)| c == &canonical_kw && m == &module && l == &dep_lang) {
+                    candidates.push((canonical_kw.clone(), module.clone(), dep_lang));
                 }
 
                 self.module_map.insert(canonical_kw, module);
@@ -81,8 +82,7 @@ impl TranslationEngine {
         }
     }
 
-    /// Normalizes a string by converting it to lowercase and replacing accented/diacritic characters
-    /// with their closest base ASCII equivalent.
+    /// Normalizes a string by converting it to lowercase and replacing accented/diacritic characters.
     pub fn normalize(&self, text: &str) -> String {
         let mut normalized = String::new();
         for c in text.to_lowercase().chars() {
@@ -108,20 +108,33 @@ impl TranslationEngine {
     pub fn lookup(&self, word: &str, import_manager: &crate::engine::import::ImportManager) -> Option<&str> {
         let normalized = self.normalize(word);
         if let Some(candidates) = self.keyword_map.get(&normalized) {
-            for (canonical, module) in candidates {
-                // Check if the dependency is a language (english, italian, spanish, etc.)
-                if module == "english" || module == "italian" || module == "spanish" || module == "french" || module == "german" || module == "portuguese" || module == "romanian" {
-                    if import_manager.is_member_active(module, "translate") {
+            for (canonical, module, language) in candidates {
+                let lang_active = language.is_empty() || import_manager.is_member_active(language, "translate");
+                if lang_active {
+                    if module == "nio" || module == "nmath" || module == "nfs" || module == "nnet" {
+                        if import_manager.is_member_active(canonical, module) {
+                            return Some(canonical.as_str());
+                        }
+                    } else {
                         return Some(canonical.as_str());
                     }
-                } else if module == "nio" || module == "nmath" || module == "nfs" || module == "nnet" {
-                    // Built-in function: active if imported
-                    if import_manager.is_member_active(canonical, module) {
+                }
+            }
+        }
+        None
+    }
+
+    /// Special lookup during the import phase to resolve the member being imported before it is active.
+    pub fn lookup_import(&self, word: &str, parent: &str, import_manager: &crate::engine::import::ImportManager) -> Option<&str> {
+        let normalized = self.normalize(word);
+        if let Some(candidates) = self.keyword_map.get(&normalized) {
+            for (canonical, module, language) in candidates {
+                let lang_active = language.is_empty() || import_manager.is_member_active(language, "translate");
+                if lang_active {
+                    let matches_parent = module == parent || (parent == "translate" && module.is_empty());
+                    if matches_parent {
                         return Some(canonical.as_str());
                     }
-                } else if module.is_empty() {
-                    // Core bootstrap keywords (like import, from, da, etc.) are always active
-                    return Some(canonical.as_str());
                 }
             }
         }
@@ -152,7 +165,7 @@ impl TranslationEngine {
     pub fn get_builtin_info(&self, word: &str) -> Option<(&str, &str)> {
         let normalized = self.normalize(word);
         if let Some(candidates) = self.keyword_map.get(&normalized) {
-            for (canonical, module) in candidates {
+            for (canonical, module, _language) in candidates {
                 if module == "nio" || module == "nmath" || module == "nfs" || module == "nnet" {
                     return Some((canonical.as_str(), module.as_str()));
                 }
@@ -179,7 +192,6 @@ mod tests {
     fn test_mixed_lookups() {
         let engine = TranslationEngine::new();
         let mut import_manager = ImportManager::new();
-        // Import English, Italian, Spanish, Romanian, and nmath
         import_manager.import_member("english", "translate");
         import_manager.import_member("italian", "translate");
         import_manager.import_member("spanish", "translate");

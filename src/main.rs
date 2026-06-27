@@ -18,19 +18,12 @@ fn main() {
     match command.as_str() {
         "build" => {
             if args.len() < 3 {
-                welcome::show_error("Missing filename. Usage: nsc build <filename.ns> [--lang <lang>]");
+                welcome::show_error("Missing filename. Usage: nsc build <filename.ns>");
                 return;
             }
             let filename = &args[2];
 
-            // Parse optional --lang parameter (defaults to English "en")
-            let lang = args.iter()
-                .position(|arg| arg == "--lang")
-                .and_then(|idx| args.get(idx + 1))
-                .map(|s| s.as_str())
-                .unwrap_or("en");
-
-            let mut engine = Engine::new(lang);
+            let mut engine = Engine::new();
             engine.run_file(filename);
         },
         "version" => {

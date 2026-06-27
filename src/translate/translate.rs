@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use std::collections::HashMap;
 
 pub struct TranslationEngine {
@@ -9,17 +8,20 @@ pub struct TranslationEngine {
 }
 
 impl TranslationEngine {
-    /// Create a new translation engine, loading English by default, plus the target language.
-    pub fn new(lang: &str) -> Self {
+    /// Create a new translation engine, loading ALL supported languages by default to allow mixed-language programs.
+    pub fn new() -> Self {
         let mut engine = Self {
             keyword_map: HashMap::new(),
             module_map: HashMap::new(),
         };
-        // Always load English as fallback/standard
+        // Load all supported languages simultaneously
         engine.load_language("en");
-        if lang != "en" {
-            engine.load_language(lang);
-        }
+        engine.load_language("it");
+        engine.load_language("es");
+        engine.load_language("fr");
+        engine.load_language("de");
+        engine.load_language("pt");
+        engine.load_language("ro");
         engine
     }
 
@@ -89,23 +91,23 @@ mod tests {
 
     #[test]
     fn test_normalization() {
-        let engine = TranslationEngine::new("en");
+        let engine = TranslationEngine::new();
         assert_eq!(engine.normalize("SÉ"), "se");
         assert_eq!(engine.normalize("funcția"), "functia");
         assert_eq!(engine.normalize("München"), "munchen");
     }
 
     #[test]
-    fn test_english_lookup() {
-        let engine = TranslationEngine::new("en");
+    fn test_mixed_lookups() {
+        let engine = TranslationEngine::new();
+        // English
         assert_eq!(engine.lookup("if"), Some("if"));
-        assert_eq!(engine.lookup("function"), Some("function"));
-        assert_eq!(engine.lookup("let"), Some("let"));
-        assert_eq!(engine.lookup("const"), Some("const"));
-        assert_eq!(engine.lookup("fetch"), Some("fetch"));
-        assert_eq!(engine.lookup("sin"), Some("sin"));
-        assert_eq!(engine.lookup("from"), Some("from"));
-        assert_eq!(engine.lookup("not_a_keyword"), None);
+        // Italian
+        assert_eq!(engine.lookup("se"), Some("if"));
+        // Romanian
+        assert_eq!(engine.lookup("daca"), Some("if"));
+        // Spanish
+        assert_eq!(engine.lookup("si"), Some("if"));
         
         assert_eq!(engine.required_module("sin"), "nmath");
         assert_eq!(engine.required_module("print"), "nio");

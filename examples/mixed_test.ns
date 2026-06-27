@@ -1,0 +1,19 @@
+importa * da nio
+importa * da nmath
+
+erstelle x = 5
+crea y = 10
+creaza z = 15
+
+funktion test() {
+    mentre x < 10 {
+        se x == 7 {
+            afiseaza("x is 7")
+        } altrimenti {
+            stampa("x is not 7")
+        }
+        x = x + 1
+    }
+}
+
+test()

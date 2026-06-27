@@ -28,9 +28,8 @@ pub struct Engine {
 
 impl Engine {
     /// Create a new Engine instance with the target language for keyword translation.
-    pub fn new(lang: &str) -> Self {
-        println!("[Engine] Initializing Translation Engine for language: '{}'...", lang);
-        let translation_engine = TranslationEngine::new(lang);
+        println!("[Engine] Initializing Translation Engine (supporting all active languages)...");
+        let translation_engine = TranslationEngine::new();
         
         println!("[Engine] Initializing Import Manager...");
         let import_manager = ImportManager::new();

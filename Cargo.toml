@@ -1,6 +1,6 @@
 [package]
 name = "ns"
-version = "0.8.0"
+version = "0.10.0"
 edition = "2021"
 authors = ["HawkStract"]
 description = "The official compiler for the NodeStract (.ns) language"

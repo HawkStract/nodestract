@@ -1,4 +1,4 @@
-#[allow(dead_code, unused_imports)]
+#![allow(dead_code, unused_imports)]
 #[path = "lexer/lexer.rs"]
 pub mod lexer;
 #[path = "ast.rs"]

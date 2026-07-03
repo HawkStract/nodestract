@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+importa * da nmath
+
+crea p = potenza(2, 3)
+crea l = logaritmo(1)
+
+stampa("2^3:", p)
+stampa("ln(1):", l)
+
+se (p == 8.0 && l == 0.0) {
+    stampa("Pow Log OK")
+} altrimenti {
+    stampa("FAIL: pow/log")
+}

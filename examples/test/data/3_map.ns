@@ -1,0 +1,25 @@
+importa italiano da translate
+importa * da nio
+
+crea dizionario = {
+    "chiave": "valore",
+    "numero": 42
+}
+
+stampa("Dizionario:", dizionario)
+
+crea val = dizionario["chiave"]
+stampa("Valore chiave:", val)
+se (val == "valore") {
+    stampa("Map access OK")
+} altrimenti {
+    stampa("FAIL: dizionario[chiave] != valore")
+}
+
+crea len_map = lunghezza(dizionario)
+stampa("Lunghezza dizionario:", len_map)
+se (len_map == 2) {
+    stampa("Map length OK")
+} altrimenti {
+    stampa("FAIL: lunghezza(dizionario) != 2")
+}

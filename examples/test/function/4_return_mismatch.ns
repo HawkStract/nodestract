@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+
+funzione get_nome() {
+    ritorna "Luca"
+}
+
+crea ris = get_nome() * 3
+stampa("Risultato Luca * 3:", ris)
+
+se (ris == nullo) {
+    stampa("Return mismatch handling OK")
+} altrimenti {
+    stampa("FAIL: get_nome() * 3 non ha restituito nullo, era", ris)
+}

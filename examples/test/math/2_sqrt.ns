@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+importa * da nmath
+
+crea ris = radq(16)
+stampa("radq(16):", ris)
+
+se (ris == 4.0) {
+    stampa("Sqrt OK")
+} altrimenti {
+    stampa("FAIL: sqrt")
+}

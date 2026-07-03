@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+importa * da nmath
+
+crea valore_assoluto = assoluto(-10.5)
+crea arrotondato = arrotonda(4.6)
+
+stampa("Assoluto:", valore_assoluto)
+stampa("Arrotondato:", arrotondato)
+
+se (valore_assoluto == 10.5 && arrotondato == 5) {
+    stampa("Abs Round OK")
+} altrimenti {
+    stampa("FAIL: abs/round")
+}

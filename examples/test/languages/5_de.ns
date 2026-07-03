@@ -1,0 +1,7 @@
+importieren deutsch von translate
+importieren ausgeben von nio
+
+erstelle x = 10
+wenn (x == 10) {
+    ausgeben("German OK")
+}

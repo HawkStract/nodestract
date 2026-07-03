@@ -1,0 +1,7 @@
+importa romana din translate
+importa afiseaza din nio
+
+creaza x = 10
+daca (x == 10) {
+    afiseaza("Romanian OK")
+}

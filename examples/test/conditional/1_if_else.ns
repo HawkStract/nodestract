@@ -1,0 +1,16 @@
+importa italiano da translate
+importa * da nio
+
+crea x = 10
+se (x == 10) {
+    stampa("If block OK")
+} altrimenti {
+    stampa("FAIL: If block did not execute")
+}
+
+crea y = 20
+se (y == 10) {
+    stampa("FAIL: If branch executed erroneously")
+} altrimenti {
+    stampa("Else block OK")
+}

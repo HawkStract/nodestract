@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+importa * da nnet
+
+crea ris = richiedi("http://invalid.domain.that.does.not.exist")
+stampa("Risultato invalid URL:", ris)
+
+se (ris == nullo) {
+    stampa("Invalid URL OK")
+} altrimenti {
+    stampa("FAIL: Invalid URL non ha restituito nullo")
+}

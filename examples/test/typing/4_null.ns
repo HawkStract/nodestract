@@ -1,0 +1,17 @@
+importa italiano da translate
+importa * da nio
+
+crea x = nullo
+
+se (x == nullo) {
+    stampa("Null comparison OK")
+} altrimenti {
+    stampa("FAIL: x != nullo")
+}
+
+crea y = 10
+se (y != nullo) {
+    stampa("Not null comparison OK")
+} altrimenti {
+    stampa("FAIL: y == nullo")
+}

@@ -1,0 +1,21 @@
+importa italiano da translate
+importa * da nio
+
+crea frutto = "pera"
+crea ris = ""
+
+scelta (frutto) {
+    caso "banana":
+        ris = "giallo"
+    caso "mela":
+        ris = "rosso"
+    predefinito:
+        ris = "sconosciuto"
+}
+
+stampa("Colore:", ris)
+se (ris == "sconosciuto") {
+    stampa("Switch default OK")
+} altrimenti {
+    stampa("FAIL: switch default")
+}

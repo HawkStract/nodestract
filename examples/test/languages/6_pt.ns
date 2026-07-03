@@ -1,0 +1,7 @@
+importar portugues de translate
+importar mostrar de nio
+
+criar x = 10
+se (x == 10) {
+    mostrar("Portuguese OK")
+}

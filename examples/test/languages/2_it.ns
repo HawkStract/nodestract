@@ -1,0 +1,7 @@
+importa italiano da translate
+importa stampa da nio
+
+crea x = 10
+se (x == 10) {
+    stampa("Italian OK")
+}

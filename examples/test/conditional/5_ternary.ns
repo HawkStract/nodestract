@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+
+crea eta = 20
+crea stato = (eta >= 18) ? "maggiorenne" : "minorenne"
+
+stampa("Stato:", stato)
+se (stato == "maggiorenne") {
+    stampa("Ternary operator OK")
+} altrimenti {
+    stampa("FAIL: ternary operator")
+}

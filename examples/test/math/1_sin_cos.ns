@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+importa * da nmath
+
+crea s = sen(0)
+crea c = cos(0)
+
+stampa("sen(0):", s)
+stampa("cos(0):", c)
+
+se (s == 0.0 && c == 1.0) {
+    stampa("Sin Cos OK")
+} altrimenti {
+    stampa("FAIL: sin/cos")
+}

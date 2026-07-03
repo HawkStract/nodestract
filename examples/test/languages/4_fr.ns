@@ -1,0 +1,7 @@
+importer francais de translate
+importer afficher de nio
+
+creer x = 10
+si (x == 10) {
+    afficher("French OK")
+}

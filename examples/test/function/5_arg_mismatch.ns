@@ -1,0 +1,16 @@
+importa italiano da translate
+importa * da nio
+
+funzione somma_tre(a, b, c) {
+    ritorna a + b + c
+}
+
+// Chiamata con solo 2 parametri invece di 3
+crea ris = somma_tre(10, 20)
+stampa("Risultato somma_tre con 2 argomenti:", ris)
+
+se (ris == nullo) {
+    stampa("Arg count mismatch OK")
+} altrimenti {
+    stampa("FAIL: somma_tre(10, 20) non ha restituito nullo, era", ris)
+}

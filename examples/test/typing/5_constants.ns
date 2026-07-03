@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+
+fissa COSTANTE = 42
+stampa("Costante iniziale:", COSTANTE)
+
+// Tentativo di riassegnazione
+COSTANTE = 99
+
+stampa("Costante finale:", COSTANTE)
+se (COSTANTE == 42) {
+    stampa("Constant protection OK")
+} altrimenti {
+    stampa("FAIL: Constant was modified to", COSTANTE)
+}

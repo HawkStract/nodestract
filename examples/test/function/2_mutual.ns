@@ -1,0 +1,28 @@
+importa italiano da translate
+importa * da nio
+
+funzione pari(n) {
+    se (n == 0) {
+        ritorna vero
+    }
+    ritorna dispari(n - 1)
+}
+
+funzione dispari(n) {
+    se (n == 0) {
+        ritorna falso
+    }
+    ritorna pari(n - 1)
+}
+
+crea ris_pari = pari(4)
+crea ris_dispari = dispari(4)
+
+stampa("Pari(4):", ris_pari)
+stampa("Dispari(4):", ris_dispari)
+
+se (ris_pari == vero && ris_dispari == falso) {
+    stampa("Mutual calls OK")
+} altrimenti {
+    stampa("FAIL: Pari/dispari incorretto")
+}

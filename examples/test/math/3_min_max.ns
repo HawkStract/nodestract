@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+importa * da nmath
+
+crea val_min = minimo(15, 30)
+crea val_max = massimo(15, 30)
+
+stampa("Minimo:", val_min)
+stampa("Massimo:", val_max)
+
+se (val_min == 15 && val_max == 30) {
+    stampa("Min Max OK")
+} altrimenti {
+    stampa("FAIL: min/max")
+}

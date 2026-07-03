@@ -1,0 +1,27 @@
+importa italiano da translate
+importa * da nio
+
+crea a = 10
+crea b = 3
+crea c = 2.5
+
+// Aritmetica
+crea somma = a + b
+crea sottrazione = a - b
+crea moltiplicazione = a * b
+crea divisione_intera = a / b
+crea divisione_float = a / 4.0
+
+stampa("Somma:", somma)
+stampa("Sottrazione:", sottrazione)
+stampa("Moltiplicazione:", moltiplicazione)
+stampa("Divisione intera:", divisione_intera)
+stampa("Divisione float:", divisione_float)
+
+// Comparazione
+se (a > b) { stampa("Comparison > OK") }
+se (b < a) { stampa("Comparison < OK") }
+se (a >= 10) { stampa("Comparison >= OK") }
+se (b <= 3) { stampa("Comparison <= OK") }
+se (a == 10) { stampa("Comparison == OK") }
+se (a != b) { stampa("Comparison != OK") }

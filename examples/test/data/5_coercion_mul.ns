@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+
+crea x = 1
+crea y = x * "pesci"
+stampa("Risultato 1 * pesci:", y)
+
+se (y == nullo) {
+    stampa("Coercion mul invalid OK")
+} altrimenti {
+    stampa("FAIL: 1 * pesci non ha restituito nullo, era", y)
+}

@@ -1,0 +1,16 @@
+importa italiano da translate
+importa * da nio
+
+crea somma = 0
+per i in 1 .. 5 {
+    stampa("Ciclo per - i =", i)
+    somma = somma + i
+}
+
+stampa("Somma totale:", somma)
+// L'intervallo 1..5 comprende 1, 2, 3, 4. La somma è 10.
+se (somma == 10) {
+    stampa("Range per loop OK")
+} altrimenti {
+    stampa("FAIL: somma != 10, era", somma)
+}

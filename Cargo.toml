@@ -19,3 +19,7 @@ embed-resource = "2.5"
 [[example]]
 name = "lessons"
 path = "examples/lessons/lessons.rs"
+
+[[example]]
+name = "test_suite"
+path = "examples/test/test.rs"

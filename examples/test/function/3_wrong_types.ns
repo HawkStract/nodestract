@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+
+funzione raddoppia(n) {
+    ritorna n * 2
+}
+
+crea ris = raddoppia("cane")
+stampa("Raddoppia cane:", ris)
+
+se (ris == nullo) {
+    stampa("Wrong type handling OK")
+} altrimenti {
+    stampa("FAIL: raddoppia(cane) non ha restituito nullo, era", ris)
+}

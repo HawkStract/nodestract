@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+importa * da nnet
+
+crea ris = richiedi("http://127.0.0.1:12345/success")
+stampa("Risultato GET:", ris)
+
+se (ris == "Hello NodeStract") {
+    stampa("GET success OK")
+} altrimenti {
+    stampa("FAIL: GET non ha restituito il valore previsto")
+}

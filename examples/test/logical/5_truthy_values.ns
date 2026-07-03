@@ -1,0 +1,10 @@
+importa italiano da translate
+importa * da nio
+
+se ("ciao") { stampa("String truthy OK") } altrimenti { stampa("FAIL: string truthy") }
+se ("") { stampa("FAIL: empty string truthy") } altrimenti { stampa("Empty string falsy OK") }
+
+se (1) { stampa("Number 1 truthy OK") } altrimenti { stampa("FAIL: number 1 truthy") }
+se (0) { stampa("FAIL: number 0 truthy") } altrimenti { stampa("Number 0 falsy OK") }
+
+se (nullo) { stampa("FAIL: null truthy") } altrimenti { stampa("Null falsy OK") }

@@ -1,0 +1,14 @@
+importa italiano da translate
+importa * da nio
+
+se (!falso) {
+    stampa("!false OK")
+} altrimenti {
+    stampa("FAIL: !false")
+}
+
+se (!vero) {
+    stampa("FAIL: !true")
+} altrimenti {
+    stampa("!true OK")
+}

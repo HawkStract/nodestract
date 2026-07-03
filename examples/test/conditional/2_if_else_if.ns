@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+
+crea x = 2
+
+se (x == 1) {
+    stampa("FAIL: x == 1")
+} altrimenti se (x == 2) {
+    stampa("Else if branch OK")
+} altrimenti {
+    stampa("FAIL: else branch")
+}

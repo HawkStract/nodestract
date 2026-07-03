@@ -1,0 +1,13 @@
+import * from translate
+import * from nio
+
+let x = 10
+crea y = 20
+
+if (x == 10) {
+    stampa("Mixed English/Italian let-crea OK")
+}
+
+se (y == 20) {
+    print("Mixed English/Italian if-se OK")
+}

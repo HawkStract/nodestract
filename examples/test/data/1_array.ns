@@ -1,0 +1,21 @@
+importa italiano da translate
+importa * da nio
+
+crea arr = [10, 20, 30]
+stampa("Array iniziale:", arr)
+
+crea primo = arr[0]
+stampa("Primo elemento:", primo)
+se (primo == 10) {
+    stampa("Array access OK")
+} altrimenti {
+    stampa("FAIL: arr[0] != 10")
+}
+
+crea len_arr = lunghezza(arr)
+stampa("Lunghezza array:", len_arr)
+se (len_arr == 3) {
+    stampa("Array length OK")
+} altrimenti {
+    stampa("FAIL: lunghezza(arr) != 3")
+}

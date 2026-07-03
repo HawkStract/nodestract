@@ -1,0 +1,18 @@
+importa italiano da translate
+importa * da nio
+
+funzione fattoriale(n) {
+    se (n <= 1) {
+        ritorna 1
+    }
+    ritorna n * fattoriale(n - 1)
+}
+
+crea ris = fattoriale(5)
+stampa("Fattoriale di 5:", ris)
+
+se (ris == 120) {
+    stampa("Recursion OK")
+} altrimenti {
+    stampa("FAIL: fattoriale(5) != 120, era", ris)
+}

@@ -1,0 +1,38 @@
+importa italiano da translate
+importa * da nio
+
+crea t = vero
+crea f = falso
+
+se (t) {
+    stampa("Bool true OK")
+} altrimenti {
+    stampa("FAIL: true was false")
+}
+
+se (f) {
+    stampa("FAIL: false was true")
+} altrimenti {
+    stampa("Bool false OK")
+}
+
+crea and_op = t && f
+se (and_op) {
+    stampa("FAIL: true && false was true")
+} altrimenti {
+    stampa("Bool AND OK")
+}
+
+crea or_op = t || f
+se (or_op) {
+    stampa("Bool OR OK")
+} altrimenti {
+    stampa("FAIL: true || false was false")
+}
+
+crea not_op = !t
+se (not_op) {
+    stampa("FAIL: !true was true")
+} altrimenti {
+    stampa("Bool NOT OK")
+}

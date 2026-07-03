@@ -1,0 +1,13 @@
+importa italiano da translate
+importa * da nio
+
+// ! ha precedenza su && e ||. && ha precedenza su ||.
+// Quindi: !falso && falso || vero  =>  (vero && falso) || vero  => falso || vero => vero
+crea ris = !falso && falso || vero
+
+stampa("Precedenza logica:", ris)
+se (ris) {
+    stampa("Logic precedence OK")
+} altrimenti {
+    stampa("FAIL: logic precedence")
+}

@@ -1,0 +1,12 @@
+importa italiano da translate
+importa * da nio
+
+crea x = 1
+crea y = x + "cane"
+stampa("Risultato 1 + cane:", y)
+
+se (y == "1cane") {
+    stampa("Coercion add string OK")
+} altrimenti {
+    stampa("FAIL: 1 + cane != 1cane, era", y)
+}

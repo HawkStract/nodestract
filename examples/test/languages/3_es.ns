@@ -1,0 +1,7 @@
+importar espanol de translate
+importar imprimir de nio
+
+crear x = 10
+si (x == 10) {
+    imprimir("Spanish OK")
+}

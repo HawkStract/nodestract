@@ -1,0 +1,13 @@
+importa italiano da translate
+importa * da nio
+importa * da nnet
+
+crea payload = "{\"test\": true}"
+crea ris = invia("http://127.0.0.1:12345/post", payload)
+stampa("Risultato POST:", ris)
+
+se (ris == "POST received") {
+    stampa("POST success OK")
+} altrimenti {
+    stampa("FAIL: POST non ha restituito il valore previsto")
+}

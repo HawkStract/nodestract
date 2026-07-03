@@ -1,0 +1,7 @@
+import english from translate
+import print from nio
+
+let x = 10
+if (x == 10) {
+    print("English OK")
+}

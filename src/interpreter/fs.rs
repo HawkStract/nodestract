@@ -3,8 +3,8 @@ use std::path::Path;
 use crate::engine::value::Value;
 
 pub fn read_file(path: &str) -> Value {
-    if !path.ends_with(".nso") && !path.ends_with(".txt") {
-        println!("FS Error: Only .nso or .txt files allowed.");
+    if !path.ends_with(".json") && !path.ends_with(".txt") {
+        println!("FS Error: Only .json or .txt files allowed.");
         return Value::Null;
     }
     match fs::read_to_string(path) {
@@ -14,8 +14,8 @@ pub fn read_file(path: &str) -> Value {
 }
 
 pub fn write_file(path: &str, content: &str) -> Value {
-    if !path.ends_with(".nso") && !path.ends_with(".txt") {
-        println!("FS Error: Only .nso or .txt files allowed.");
+    if !path.ends_with(".json") && !path.ends_with(".txt") {
+        println!("FS Error: Only .json or .txt files allowed.");
         return Value::Boolean(false);
     }
     
@@ -32,8 +32,8 @@ pub fn write_file(path: &str, content: &str) -> Value {
 }
 
 pub fn delete_file(path: &str) -> Value {
-    if !path.ends_with(".nso") && !path.ends_with(".txt") {
-        println!("FS Error: Only .nso or .txt files allowed.");
+    if !path.ends_with(".json") && !path.ends_with(".txt") {
+        println!("FS Error: Only .json or .txt files allowed.");
         return Value::Boolean(false);
     }
     match fs::remove_file(path) {

@@ -66,16 +66,16 @@ pub fn validate_imports(
                 ));
             }
 
-            if words.len() < 4 {
+            let len = words.len();
+            if len < 4 {
                 return Err(format!(
-                    "Syntax Error (Line {}): Invalid import syntax. Expected: import <member> from <parent>",
+                    "Syntax Error (Line {}): Invalid import syntax. Expected: import <member(s)> from <parent>",
                     line_num + 1
                 ));
             }
 
-            let member = words[1];
-            let from_keyword = words[2];
-            let parent = words[3];
+            let parent = words[len - 1];
+            let from_keyword = words[len - 2];
 
             // Verify "from" keyword
             let is_from = translation_engine
@@ -90,23 +90,26 @@ pub fn validate_imports(
                 ));
             }
 
-            // Translate member to its canonical English form (e.g. "italiano" -> "italian")
-            let canonical_member = translation_engine
-                .lookup_import(member, parent, &import_manager)
-                .unwrap_or(member);
+            let members = &words[1..len - 2];
+            for &member in members {
+                // Translate member to its canonical English form (e.g. "italiano" -> "italian")
+                let canonical_member = translation_engine
+                    .lookup_import(member, parent, &import_manager)
+                    .unwrap_or(member);
 
-            // Register import in ImportManager
-            if !import_manager.import_member(canonical_member, parent) {
-                return Err(format!(
-                    "Import Error (Line {}): Cannot import '{}' from '{}'",
-                    line_num + 1,
-                    member,
-                    parent
-                ));
-            }
+                // Register import in ImportManager
+                if !import_manager.import_member(canonical_member, parent) {
+                    return Err(format!(
+                        "Import Error (Line {}): Cannot import '{}' from '{}'",
+                        line_num + 1,
+                        member,
+                        parent
+                    ));
+                }
 
-            if parent == "translate" {
-                has_imported_any_language = true;
+                if parent == "translate" {
+                    has_imported_any_language = true;
+                }
             }
 
             // Preserve line count by replacing import line with an empty line

@@ -1,0 +1,13 @@
+importa italiano, english da translate
+importa * da nio
+
+crea x = 10
+let y = 20
+
+stampa("x:", x, "y:", y)
+
+se (x == 10 && y == 20) {
+    stampa("Multi import OK")
+} altrimenti {
+    stampa("FAIL: Multi import failed")
+}

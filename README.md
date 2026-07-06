@@ -19,6 +19,9 @@ Tutta la documentazione dettagliata del progetto è organizzata nella cartella `
 3. [**Analisi Critica (docs/AnalisiCritica.md)**](file:///w:/University/3o%20anno/ICDD/Esame/Progetto/NodeStract/docs/AnalisiCritica.md)
    Un'analisi onesta dei punti di forza, dei limiti strutturali dell'interprete attuale, delle scelte progettuali e delle sessioni di test effettuate per validarne il funzionamento.
 
+4. [**Specifiche del Linguaggio (docs/SpecificheLinguaggio.md)**](file:///w:/University/3o%20anno/ICDD/Esame/Progetto/NodeStract/docs/SpecificheLinguaggio.md)
+   Il documento formale delle specifiche sintattiche e delle regole del linguaggio NodeStract.
+
 ---
 
 ## Analisi Strutturale ed Errori Rilevati

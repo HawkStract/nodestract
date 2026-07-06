@@ -1,56 +1,61 @@
 # Analisi Critica dello Strumento: NodeStract (NS)
 
-Questo documento presenta un'analisi critica del prototipo di **NodeStract (NS)**, evidenziandone i punti di forza, i limiti strutturali attuali e i test effettuati per convalidare il funzionamento del compilatore/interprete.
+Questo documento presenta una valutazione critica del prototipo del linguaggio **NodeStract (NS)**, evidenziandone i punti di forza, le scelte di progettazione, le caratteristiche architetturali e i test effettuati per convalidare il compilatore/interprete.
 
 ---
 
 ## 1. Punti di Forza e Innovazione Didattica
 
-* **Isolamento delle Parole Chiave**: L'idea di caricare dinamicamente le parole chiave in base alle lingue importate dimostra in modo eccellente il funzionamento teorico di un analizzatore lessicale flessibile. Gli studenti possono constatare empiricamente come un termine acquisisca o perda il suo status di "parola riservata" a seconda del contesto di configurazione.
-* **Separazione Netta delle Fasi**: L'architettura modulare (Lexer -> Parser -> AST -> Interpreter) rispetta rigorosamente i pattern canonici di progettazione dei compilatori, rendendo la base di codice Rust facile da leggere, estendere e spiegare in un contesto accademico.
-* **Robustezza dei Pre-controlli**: I controlli sul bilanciamento preventivo dei delimitatori e l'impossibilità di usare parole chiave come identificatori riducono drasticamente i crash dell'interprete a runtime, intercettando gli errori logici comuni già nella fase di compilazione iniziale.
+* **Isolamento e Attivazione Dinamica delle Parole Chiave**: L'idea di caricare e abilitare le parole chiave in base alle lingue importate dimostra in modo eccellente il funzionamento teorico di un analizzatore lessicale flessibile. Consente di osservare empiricamente come un termine acquisisca o perda il suo status di "parola riservata" a seconda della configurazione.
+* **Separazione Netta delle Fasi della Pipeline**: L'architettura modulare (Import Validator -> Lexer -> Parser -> AST -> Interpreter) rispetta i pattern classici di progettazione dei compilatori, rendendo la base di codice Rust facile da leggere, estendere e spiegare in un contesto didattico.
+* **Scoping Lessicale Rigido**: L'ambiente di esecuzione isola correttamente le variabili locali delle funzioni garantendo lo scoping lessicale ed evitando la visibilità involontaria di variabili appartenenti allo stack dei chiamanti intermedi.
+* **Gestione Protetta del File System e della Rete**: Il caricamento controllato tramite i moduli di sistema (`nio`, `nfs`, `nmath`, `nnet`) costringe a rispettare il principio del minor privilegio (least privilege), rendendo le capacità di I/O e di rete sicure e isolate.
 
 ---
 
-## 2. Limitazioni Strutturali e Aree di Miglioramento
+## 2. Caratteristiche Architetturali e Scelte di Progetto
 
-Trattandosi di un prototipo didattico (Tipologia 2), l'attuale implementazione presenta alcune limitazioni di rilievo che influiscono sulla correttezza formale del linguaggio. Questi punti sono documentati anche nel file di sviluppo [`NextStep.md`](file:///w:/University/3o%20anno/ICDD/Esame/Progetto/NodeStract/NextStep.md) per future correzioni:
+L'attuale implementazione, focalizzata sulle finalità didattiche del progetto, adotta alcune soluzioni specifiche che ne definiscono il perimetro d'uso:
 
-### 2.1 Modello di Scoping Dinamico (Anomalia di Esecuzione)
-* **Descrizione**: L'interprete gestisce gli ambienti delle funzioni inserendo lo scope locale sopra lo stack di quelli correnti. Questo fa sì che le variabili locali della funzione chiamante siano visibili alla funzione chiamata (scoping dinamico).
-* **Impatto**: Il comportamento devia dallo standard dei moderni linguaggi a cui NodeStract si ispira (JavaScript/Python), i quali adottano lo scoping lessicale.
+### 2.1 Tipizzazione Dinamica e Flessibile
+* **Descrizione**: NodeStract non richiede la dichiarazione statica dei tipi per le variabili, preferendo un approccio dinamico simile a JavaScript e Python.
+* **Valutazione**: Questa scelta semplifica notevolmente la scrittura del codice sorgente da parte degli studenti e snellisce la struttura dell'AST, sebbene sposti i controlli di compatibilità dei tipi interamente a runtime.
 
-### 2.2 Rimozione delle Omissioni e Completamento delle Built-in
-* **Descrizione**: Alcune funzioni built-in originariamente indicate nella documentazione dei requisiti del progetto (`spec.md`) erano assenti o ridondanti:
-  * `delete` (elimina) per il filesystem (`nfs`) è stata completata con successo.
-  * Le funzioni `open` (apri), `connect` (connetti) e `receive` (ricevi) sono state rimosse dalle specifiche in quanto obsolete/ridondanti (la rete ad alto livello utilizza già `fetch`/`send` su HTTP, rendendo i TCP socket fuori scopo per un linguaggio didattico procedurale).
+### 2.2 Sincronicità delle Operazioni I/O e Network
+* **Descrizione**: Tutte le operazioni di rete (richieste HTTP GET/POST) e di lettura/scrittura su File System vengono eseguite in modo bloccante e sincrono.
+* **Valutazione**: L'assenza di asincronia (come `async/await` reali o thread concorrenti nell'esecutore) è ottimale per mantenere lineare l'esecuzione e comprensibile il codice dell'interprete, senza introdurre la complessità dei cicli di eventi (event loops).
 
-### 2.3 Perdita del Tracciamento Corretto delle Righe negli Errori
-* **Descrizione**: La rimozione fisica delle righe contenenti gli `import` all'inizio del file (eseguita da `check.rs`) fa sì che le righe successive vengano spostate verso l'alto nel codice passato al compilatore.
-* **Impatto**: Di conseguenza, se viene rilevato un errore sintattico alla riga 10 del file originale, il compilatore potrebbe segnalarlo erroneamente alla riga 8, rendendo difficile il debug per l'utente finale.
-
-### 2.4 Assenza di Controllo Semantico su Istruzioni di Loop
-* **Descrizione**: Le istruzioni `break` e `continue` sono interpretate sintatticamente ovunque nel codice.
-* **Impatto**: Se inserite fuori da un ciclo `mentre`/`per` (ad esempio in cima a una funzione), l'interprete non genera un errore di compilazione, ma altera i flag interni, causando comportamenti imprevedibili all'uscita delle chiamate.
+### 2.3 Serializzazione e Deserializzazione JSON Automatica
+* **Descrizione**: La libreria `nfs` integra un supporto nativo che rileva l'estensione `.json` ed esegue il parsing o la formattazione dei dati in modo trasparente.
+* **Valutazione**: Consente la persistenza e lo scambio strutturato dei dati a runtime senza costringere a implementare parser o serializzatori personalizzati nel codice sorgente.
 
 ---
 
 ## 3. Test Effettuati e Validazione dello Strumento
 
-Il prototipo è stato convalidato attraverso due modalità di test:
+Il prototipo è stato validato attraverso una suite di test strutturata:
 
 ### 3.1 Suite di Test Automatizzati (Unit Test)
-Il codice sorgente Rust include una suite di unit test integrata per verificare la correttezza del comportamento dei singoli moduli isolati.
-* **Test di Normalizzazione**: Validazione del corretto funzionamento di `normalize` in `translate.rs` con caratteri accentati ed estesi (es. verifica che `SÉ` diventi correttamente `se`).
-* **Test di Importazione Gerarchica**: Validazione dell'efficacia di `ImportManager` nella gestione dei permessi (es. verifica che l'importazione di una singola funzione come `sin` non consenta l'utilizzo di `cos`, e che le importazioni wildcard `*` funzionino come previsto).
+Il codice sorgente Rust include unit test interni per verificare i moduli critici:
+* **Normalizzazione Lessicale**: Verifica del funzionamento di `normalize` in `translate.rs` con caratteri accentati ed estesi (es. `SÉ` -> `se`).
+* **Importazione Gerarchica**: Controllo dell'efficacia di `ImportManager` nella gestione dei permessi (es. verifica che l'importazione di una singola funzione escluda le altre dello stesso modulo).
+* **Integrità del Conteggio Righe**: Verifica che la rimozione degli import non alteri la corrispondenza dei numeri di riga per la segnalazione degli errori.
 
-Per eseguire i test automatizzati della suite Rust:
+Per eseguire i test automatizzati Rust:
 ```bash
 cargo test
 ```
 
-### 3.2 Test di Integrazione e Script di Esempio
-Sono stati scritti ed eseguiti diversi file di esempio (situati in `examples/`) per verificare il comportamento dell'interprete su script completi:
-1. **`examples/it.ns`**: Verifica il funzionamento della sintassi di base italiana (dichiarazione di variabili, costanti, commenti su più righe e funzioni di I/O). Ha permesso di individuare l'errore di assegnazione a costanti (`PI_GRECO`).
-2. **`examples/it_test.ns`**: Script complesso che testa cicli annidati, funzioni ricorsive (fattoriale), logica booleana complessa, array, dizionari e accesso a file system locale.
-3. **`examples/lessons/`**: Una serie di mini-lezioni didattiche progressive ideate per guidare l'utente finale nell'apprendimento passo-passo dei costrutti.
+### 3.2 Test di Integrazione e Categorie di Test
+La suite di test di integrazione (`examples/test/`) copre oltre 50 scenari divisi per aree tematiche:
+1. **languages**: Verifica l'attivazione dei singoli vocabolari e le importazioni multiple.
+2. **typing**: Controllo della corretta gestione di costanti, riassegnazioni protette, tipi booleani, stringhe e null.
+3. **data**: Operazioni su array, range, mappe e coercizione automatica dei tipi.
+4. **net**: Simulazione di richieste GET e POST su server locale e gestione dei tentativi di riconnessione (retry).
+5. **function**: Test di ricorsione, funzioni nidificate, scoping e chiamate dinamiche.
+6. **file**: Suite di 10 test che convalidano la scrittura, lettura, sovrascrittura ed eliminazione sicura di file `.txt` e `.json`.
+
+Per eseguire la test suite completa di integrazione:
+```bash
+cargo run --example test_suite
+```

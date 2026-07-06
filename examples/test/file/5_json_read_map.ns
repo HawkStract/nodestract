@@ -1,0 +1,21 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path = "temp_5.json"
+crea dati = {
+    "titolo": "Programmazione",
+    "codice": 101
+}
+scrivi(path, dati)
+
+crea letto = leggi(path)
+crea del_ok = elimina(path)
+
+stampa("Letto:", letto)
+
+se (letto["titolo"] == "Programmazione" && letto["codice"] == 101 && del_ok == vero) {
+    stampa("Test 5 OK")
+} altrimenti {
+    stampa("FAIL: Test 5 failed")
+}

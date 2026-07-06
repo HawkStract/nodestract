@@ -1,0 +1,19 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path = "temp_9.json"
+scrivi(path, {"contatore": 1})
+
+crea letto_1 = leggi(path)
+letto_1["contatore"] = 2
+scrivi(path, letto_1)
+
+crea letto_2 = leggi(path)
+crea del_ok = elimina(path)
+
+se (letto_2["contatore"] == 2 && del_ok == vero) {
+    stampa("Test 9 OK")
+} altrimenti {
+    stampa("FAIL: Test 9 failed")
+}

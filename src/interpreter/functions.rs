@@ -49,7 +49,7 @@ impl Interpreter {
                 if args.len() >= 2 {
                     let path_val = self.eval_expression(&args[0]);
                     let content_val = self.eval_expression(&args[1]);
-                    fs::write_file(&path_val.to_string(), &content_val.to_string())
+                    fs::write_file(&path_val.to_string(), &content_val)
                 } else {
                     Value::Boolean(false)
                 }

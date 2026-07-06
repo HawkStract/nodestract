@@ -1,0 +1,21 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path = "temp_6.json"
+crea dati = {
+    "utente": {
+        "id": 1,
+        "ruoli": ["admin", "user"]
+    }
+}
+scrivi(path, dati)
+
+crea letto = leggi(path)
+crea del_ok = elimina(path)
+
+se (letto["utente"]["id"] == 1 && letto["utente"]["ruoli"][0] == "admin" && del_ok == vero) {
+    stampa("Test 6 OK")
+} altrimenti {
+    stampa("FAIL: Test 6 failed")
+}

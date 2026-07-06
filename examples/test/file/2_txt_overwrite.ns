@@ -1,0 +1,15 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path = "temp_2.txt"
+scrivi(path, "Primo")
+crea ok = scrivi(path, "Secondo")
+crea letto = leggi(path)
+crea del_ok = elimina(path)
+
+se (ok == vero && letto == "Secondo" && del_ok == vero) {
+    stampa("Test 2 OK")
+} altrimenti {
+    stampa("FAIL: Test 2 failed")
+}

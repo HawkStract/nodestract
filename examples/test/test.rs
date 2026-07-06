@@ -100,7 +100,7 @@ fn main() {
     // Wait briefly for the listener to spin up
     thread::sleep(Duration::from_millis(100));
 
-    let categories = &["languages", "typing", "data", "net", "function", "conditional", "logical", "math"];
+    let categories = &["languages", "typing", "data", "net", "function", "conditional", "logical", "math", "file"];
     let mut total_passed = 0;
     let mut total_failed = 0;
     let mut failures = Vec::new();

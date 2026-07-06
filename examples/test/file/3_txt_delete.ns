@@ -1,0 +1,14 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path = "temp_3.txt"
+scrivi(path, "Provvisorio")
+crea del_ok = elimina(path)
+crea letto = leggi(path)
+
+se (del_ok == vero && letto == nullo) {
+    stampa("Test 3 OK")
+} altrimenti {
+    stampa("FAIL: Test 3 failed")
+}

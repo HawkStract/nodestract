@@ -1,0 +1,18 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path = "temp_4.json"
+crea dati = {
+    "nome": "Mario",
+    "eta": 30
+}
+
+crea ok = scrivi(path, dati)
+crea del_ok = elimina(path)
+
+se (ok == vero && del_ok == vero) {
+    stampa("Test 4 OK")
+} altrimenti {
+    stampa("FAIL: Test 4 failed")
+}

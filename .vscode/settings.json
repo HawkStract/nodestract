@@ -1,12 +1,13 @@
 {
-    "workbench.iconTheme":  "vscode-icons",
-    "vsicons.associations.files":  [
-                                       {
-                                           "icon":  "ns",
-                                           "extensions":  [
-                                                              "ns"
-                                                          ],
-                                           "format":  "svg"
-                                       }
-                                   ]
+    "workbench.iconTheme": "vscode-icons",
+    "vsicons.customIconFolderPath": "${workspaceFolder}/bin",
+    "vsicons.associations.files": [
+        {
+            "icon": "nodestract",
+            "extensions": [
+                "ns"
+            ],
+            "format": "svg"
+        }
+    ]
 }

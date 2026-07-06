@@ -1,0 +1,18 @@
+importa italiano da translate
+importa * da nio
+importa * da nfs
+
+crea path_forbidden = "temp_10.rs"
+crea scrivi_ok = scrivi(path_forbidden, "contenuto")
+crea letto = leggi(path_forbidden)
+crea elimina_ok = elimina(path_forbidden)
+
+stampa("Scrittura proibita:", scrivi_ok)
+stampa("Lettura proibita:", letto)
+stampa("Eliminazione proibita:", elimina_ok)
+
+se (scrivi_ok == falso && letto == nullo && elimina_ok == falso) {
+    stampa("Test 10 OK")
+} altrimenti {
+    stampa("FAIL: Test 10 failed")
+}

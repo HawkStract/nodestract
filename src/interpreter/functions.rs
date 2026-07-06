@@ -14,19 +14,9 @@ impl Interpreter {
             // IO operations
             "print" => {
                 let mut output = String::new();
-                for (i, a) in args.iter().enumerate() {
+                for a in args {
                     let val = self.eval_expression(a);
-                    let val_str = val.to_string();
-                    if i > 0 {
-                        let prev_ends_space = output.ends_with(|c: char| c.is_whitespace());
-                        let next_starts_space_or_punct = val_str.starts_with(|c: char| {
-                            c.is_whitespace() || c == ',' || c == ':' || c == ';' || c == '.'
-                        });
-                        if !prev_ends_space && !next_starts_space_or_punct {
-                            output.push(' ');
-                        }
-                    }
-                    output.push_str(&val_str);
+                    output.push_str(&val.to_string());
                 }
                 println!("{}", output);
                 let _ = io::stdout().flush();

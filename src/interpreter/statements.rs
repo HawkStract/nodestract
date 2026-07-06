@@ -178,6 +178,9 @@ impl Interpreter {
             Statement::Continue => {
                 self.loop_continue = true;
             }
+            Statement::FunctionDecl { name, .. } => {
+                self.functions.insert(name.clone(), stmt.clone());
+            }
             Statement::Expr(expr) => {
                 self.eval_expression(expr);
             }

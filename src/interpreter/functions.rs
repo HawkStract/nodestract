@@ -259,14 +259,22 @@ impl Interpreter {
                             let entry = VarEntry { value: arg_val, is_mutable: true };
                             new_scope.insert(param_name.clone(), entry);
                         }
-                        self.scopes.push(new_scope);
+                        // Implement lexical scoping: isolate execution scope to global scope + local function scope
+                        let global_scope = self.scopes[0].clone();
+                        let function_scopes = vec![global_scope, new_scope];
+                        let old_scopes = std::mem::replace(&mut self.scopes, function_scopes);
+
                         for s in body {
                             self.execute_statement(&s);
                             if self.last_return.is_some() || self.exception.is_some() {
                                 break;
                             }
                         }
-                        self.scopes.pop();
+
+                        let mut finished_scopes = std::mem::replace(&mut self.scopes, old_scopes);
+                        // Copy updated global scope back to the real global scope
+                        self.scopes[0] = finished_scopes.remove(0);
+
                         let result = self.last_return.clone().unwrap_or(Value::Null);
                         self.last_return = None;
                         return result;

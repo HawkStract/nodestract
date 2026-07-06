@@ -31,7 +31,7 @@ pub enum Expression {
     BinaryOp { left: Box<Expression>, operator: String, right: Box<Expression> },
     UnaryOp { operator: String, operand: Box<Expression> },
     Ternary { condition: Box<Expression>, true_expr: Box<Expression>, false_expr: Box<Expression> },
-    FunctionCall { target: String, args: Vec<Expression> },
+    FunctionCall { target: Box<Expression>, args: Vec<Expression> },
     Await(Box<Expression>),
 }
 

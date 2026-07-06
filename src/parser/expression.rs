@@ -260,7 +260,7 @@ impl Parser {
                 }
                 self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after arguments")?;
                 expr = Expression::FunctionCall {
-                    target: name.clone(),
+                    target: Box::new(expr),
                     args,
                 };
             } else {

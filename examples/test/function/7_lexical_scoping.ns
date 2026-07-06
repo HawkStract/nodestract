@@ -1,0 +1,24 @@
+importa italiano da translate
+importa * da nio
+
+crea x = 100 // variabile globale
+
+funzione stampante() {
+    // stampante dovrebbe accedere solo alla sua x locale o alla globale
+    // NON a quella definita in chiamante()
+    ritorna x
+}
+
+funzione chiamante() {
+    crea x = 42 // locale del chiamante
+    ritorna stampante()
+}
+
+crea ris = chiamante()
+stampa("Risultato scoping:", ris)
+
+se (ris == 100) {
+    stampa("Lexical scoping OK")
+} altrimenti {
+    stampa("FAIL: Dynamic scoping occurred, found", ris)
+}

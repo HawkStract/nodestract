@@ -1,0 +1,22 @@
+importa italiano da translate
+importa * da nio
+
+funzione saluta() {
+    ritorna "Ciao Mondo"
+}
+
+// 1. Chiamata tramite variabile stringa
+crea nome_funzione = "saluta"
+crea ris1 = nome_funzione()
+stampa("Ris1:", ris1)
+
+// 2. Chiamata tramite elemento di un array
+crea lista = [saluta]
+crea ris2 = lista[0]()
+stampa("Ris2:", ris2)
+
+se (ris1 == "Ciao Mondo" && ris2 == "Ciao Mondo") {
+    stampa("Dynamic call OK")
+} altrimenti {
+    stampa("FAIL: Dynamic call failed")
+}

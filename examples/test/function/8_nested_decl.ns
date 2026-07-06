@@ -1,0 +1,23 @@
+importa italiano da translate
+importa * da nio
+
+crea eseguita = falso
+
+se (vero) {
+    funzione nidificata() {
+        eseguita = vero
+    }
+}
+
+// All'atto della dichiarazione sopra, non deve essersi eseguita!
+se (eseguita == vero) {
+    stampa("FAIL: nested function executed upon declaration")
+} altrimenti {
+    // Ora la chiamiamo
+    nidificata()
+    se (eseguita == vero) {
+        stampa("Nested declaration OK")
+    } altrimenti {
+        stampa("FAIL: nested function was not registered or failed to run")
+    }
+}

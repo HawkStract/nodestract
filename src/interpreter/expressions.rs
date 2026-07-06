@@ -27,7 +27,14 @@ impl Interpreter {
                 }
                 Value::Map(map)
             }
-            Expression::Variable(name) => self.get_var(name),
+            Expression::Variable(name) => {
+                let val = self.get_var(name);
+                if val == Value::Null && self.functions.contains_key(name) {
+                    Value::String(name.clone())
+                } else {
+                    val
+                }
+            }
             Expression::Index { target, index } => {
                 let target_val = self.eval_expression(target);
                 let index_val = self.eval_expression(index);
@@ -78,7 +85,20 @@ impl Interpreter {
                     self.eval_expression(false_expr)
                 }
             }
-            Expression::FunctionCall { target, args } => self.handle_function_call(target, args),
+            Expression::FunctionCall { target, args } => {
+                let target_val = self.eval_expression(target);
+                let func_name = match target_val {
+                    Value::String(s) => s,
+                    _ => {
+                        if let Expression::Variable(ref name) = **target {
+                            name.clone()
+                        } else {
+                            target_val.to_string()
+                        }
+                    }
+                };
+                self.handle_function_call(&func_name, args)
+            }
             Expression::Await(value) => self.eval_expression(value),
         }
     }

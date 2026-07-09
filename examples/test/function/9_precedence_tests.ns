@@ -1,0 +1,70 @@
+importa italiano da translate
+importa * da nio
+
+// Definiamo alcune funzioni con nomi significativi
+funzione calcola_quadrato(x) {
+    ritorna x * x
+}
+
+funzione calcola_area_rettangolo(base, altezza) {
+    ritorna base * altezza
+}
+
+funzione calcola_fattoriale(n) {
+    se (n <= 1) { ritorna 1 }
+    ritorna n * calcola_fattoriale(n - 1)
+}
+
+// 1. stampa(...) funziona normalmente
+stampa("Test 1: stampa funziona")
+
+// 2. stampa(...) funziona anche se c'è una variabile stampa che fa riferimento a una funzione inesistente
+crea stampa = "funzione_inesistente"
+stampa("Test 2: stampa funziona nonostante la variabile")
+
+// 3. stampa(...) funziona anche se c'è una variabile stampa con una funzione calcola_fattoriale esistente
+stampa = "calcola_fattoriale"
+stampa("Test 3: stampa funziona nonostante calcola_fattoriale")
+
+// 4. calcola_quadrato ed esiste la funzione calcola_quadrato() funziona
+crea ris4 = calcola_quadrato(5)
+stampa("Test 4: quadrato di 5 =", ris4)
+
+// 5. calcola_quadrato funziona anche se esiste una variabile calcola_quadrato con valore "stampa"
+// (poiché 1 parametro è valido per calcola_quadrato, chiama direttamente calcola_quadrato)
+crea calcola_quadrato = "stampa"
+crea ris5 = calcola_quadrato(6)
+stampa("Test 5: quadrato di 6 =", ris5)
+
+// 6. calcola_quadrato funziona anche se esiste una variabile calcola_quadrato con valore "funzione_inesistente"
+calcola_quadrato = "funzione_inesistente"
+crea ris6 = calcola_quadrato(7)
+stampa("Test 6: quadrato di 7 =", ris6)
+
+// 7. Chiamata con configurazione non adatta alla funzione diretta (2 parametri invece di 1),
+// ma adatta alla funzione contenuta nella variabile ("calcola_area_rettangolo" accetta 2 parametri).
+// Dovrebbe risolvere dinamicamente su calcola_area_rettangolo(3, 8) = 24.
+calcola_quadrato = "calcola_area_rettangolo"
+crea ris7 = calcola_quadrato(3, 8)
+stampa("Test 7: area rettangolo (3, 8) =", ris7)
+
+// 8. Chiamata a variabile che contiene un numero (non eseguibile)
+crea non_callable_num = 42
+crea ris8 = non_callable_num()
+stampa("Test 8: chiamata a numero =", ris8)
+
+// 9. Chiamata a variabile che contiene un array (non eseguibile)
+crea non_callable_arr = [1, 2, 3]
+crea ris9 = non_callable_arr()
+stampa("Test 9: chiamata ad array =", ris9)
+
+// 10. Chiamata a variabile che contiene una mappa (non eseguibile)
+crea non_callable_map = {"chiave": "valore"}
+crea ris10 = non_callable_map()
+stampa("Test 10: chiamata a mappa =", ris10)
+
+se (ris4 == 25 && ris5 == 36 && ris6 == 49 && ris7 == 24 && ris8 == nullo && ris9 == nullo && ris10 == nullo) {
+    stampa("PRECEDENCE TESTS OK")
+} altrimenti {
+    stampa("FAIL: Precedence tests failed")
+}

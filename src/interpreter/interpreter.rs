@@ -120,6 +120,24 @@ impl Interpreter {
         None
     }
 
+    pub fn is_function_arity_valid(&self, func_name: &str, args_count: usize) -> bool {
+        match func_name {
+            "print" => true,
+            "input" => args_count <= 1,
+            "read" | "delete" | "sin" | "cos" | "sqrt" | "round" | "abs" | "log" | "sleep" | "fetch" | "len" => args_count == 1,
+            "write" | "min" | "max" | "pow" | "send" => args_count == 2,
+            "random" => args_count == 0,
+            "exit" => args_count <= 1,
+            _ => {
+                if let Some(Statement::FunctionDecl { params, .. }) = self.functions.get(func_name) {
+                    params.len() == args_count
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
     pub fn mutate_value_at_path(val: &mut Value, path: &[Value], new_val: Value) -> Result<(), String> {
         if path.is_empty() {
             *val = new_val;

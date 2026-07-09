@@ -86,14 +86,50 @@ impl Interpreter {
                 }
             }
             Expression::FunctionCall { target, args } => {
-                let target_val = self.eval_expression(target);
-                let func_name = match target_val {
-                    Value::String(s) => s,
-                    _ => {
-                        if let Expression::Variable(ref name) = **target {
-                            name.clone()
+                let mut resolved_name = None;
+
+                if let Expression::Variable(ref name) = **target {
+                    let is_builtin = matches!(
+                        name.as_str(),
+                        "print" | "input" | "read" | "write" | "delete" | "sin" | "cos" | "sqrt" | "random" | "round" | "min" | "max" | "abs" | "log" | "pow" | "len" | "sleep" | "exit" | "fetch" | "send"
+                    );
+                    let has_direct = is_builtin || self.functions.contains_key(name);
+
+                    if has_direct {
+                        // Se la configurazione (numero di parametri) è valida per il nome diretto, usalo
+                        if self.is_function_arity_valid(name, args.len()) {
+                            resolved_name = Some(name.clone());
                         } else {
-                            target_val.to_string()
+                            // Altrimenti, cerca se c'è una variabile con lo stesso nome che contiene una stringa
+                            let var_val = self.get_var(name);
+                            if let Value::String(ref s) = var_val {
+                                // E controlla se questa seconda funzione è valida per il numero di parametri
+                                if self.is_function_arity_valid(s, args.len()) {
+                                    resolved_name = Some(s.clone());
+                                }
+                            }
+                        }
+
+                        // Fallback se nessuna delle due ha una configurazione valida (lasciamo che fallisca sulla diretta per errore di arità)
+                        if resolved_name.is_none() {
+                            resolved_name = Some(name.clone());
+                        }
+                    }
+                }
+
+                let func_name = match resolved_name {
+                    Some(name) => name,
+                    None => {
+                        let target_val = self.eval_expression(target);
+                        match target_val {
+                            Value::String(s) => s,
+                            _ => {
+                                if let Expression::Variable(ref name) = **target {
+                                    name.clone()
+                                } else {
+                                    target_val.to_string()
+                                }
+                            }
                         }
                     }
                 };

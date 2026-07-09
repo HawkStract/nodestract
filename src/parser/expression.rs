@@ -222,21 +222,23 @@ impl Parser {
     }
 
     fn parse_identifier_or_keyword_expr(&mut self, name_str: String) -> Result<Expression, String> {
-        let mut name = name_str;
+        let mut expr = Expression::Variable(name_str);
         self.advance();
 
-        // Accesso ai membri (notazione con punto)
-        if self.current_token() == &Token::Delimiter(".".to_string()) {
-            self.advance();
-            if let Token::Identifier(ref method) = self.current_token() {
-                name = format!("{}.{}", name, method);
-                self.advance();
-            }
-        }
-
-        let mut expr = Expression::Variable(name.clone());
         loop {
-            if self.current_token() == &Token::Delimiter("[".to_string()) {
+            if self.current_token() == &Token::Delimiter(".".to_string()) {
+                self.advance();
+                let member = match self.current_token() {
+                    Token::Identifier(s) => s.clone(),
+                    Token::Keyword(s) => s.clone(),
+                    _ => return Err("Expected identifier after '.'".to_string()),
+                };
+                self.advance();
+                expr = Expression::Index {
+                    target: Box::new(expr),
+                    index: Box::new(Expression::LiteralStr(member)),
+                };
+            } else if self.current_token() == &Token::Delimiter("[".to_string()) {
                 self.advance();
                 let index = self.parse_expression()?;
                 self.consume(&Token::Delimiter("]".to_string()), "Expected ']' after index")?;

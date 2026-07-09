@@ -58,3 +58,12 @@ nome_funzione("Ciao da chiamata dinamica!")
 ```
 Questo meccanismo è supportato per consentire un comportamento dinamico assimilabile alle callback e alle chiamate per nome tipiche dei linguaggi di scripting più flessibili.
 
+---
+
+## 6. Regole di Scope delle Variabili (C-like Scoping)
+
+NodeStract adotta regole di visibilità delle variabili semplificate e ispirate al linguaggio C/C++:
+1. **Scope delle Funzioni**: Le funzioni hanno accesso esclusivamente alle variabili definite nel proprio scope locale (i parametri passati e le variabili dichiarate all'interno del corpo della funzione) e alle variabili dichiarate nello scope globale (il livello radice del file).
+2. **Nessun Accesso a Scope Intermedi**: Le funzioni non hanno visibilità sulle variabili dichiarate in blocchi o funzioni genitore intermedi (non è supportata la risalita dinamica o le closure lessicali per contesti intermedi). Ad esempio, una funzione definita all'interno di un blocco `se` (if) non può accedere alle variabili locali di quel blocco.
+3. **Scope dei Blocchi**: I costrutti come `se` (if), `mentre` (while) e `per` (for) creano un nuovo scope di blocco per le variabili locali dichiarate al loro interno, ma tale scope è isolato e invisibile per qualsiasi chiamata a funzione definita al loro interno.
+

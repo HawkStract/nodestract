@@ -176,18 +176,21 @@ impl Interpreter {
                 }
                 self.exit_scope();
 
-                if let Some(exc) = self.exception.take() {
-                    self.enter_scope();
-                    if let Some(ref var_name) = catch_variable {
-                        self.define_var(var_name.clone(), exc, false);
-                    }
-                    for s in catch_block {
-                        self.execute_statement(s);
-                        if self.last_return.is_some() || self.loop_break || self.loop_continue || self.exception.is_some() {
-                            break;
+                if self.exception.is_some() {
+                    if let Some(ref catch_stmts) = catch_block {
+                        let exc = self.exception.take().unwrap();
+                        self.enter_scope();
+                        if let Some(ref var_name) = catch_variable {
+                            self.define_var(var_name.clone(), exc, false);
                         }
+                        for s in catch_stmts {
+                            self.execute_statement(s);
+                            if self.last_return.is_some() || self.loop_break || self.loop_continue || self.exception.is_some() {
+                                break;
+                            }
+                        }
+                        self.exit_scope();
                     }
-                    self.exit_scope();
                 }
 
                 if let Some(finally_stmts) = finally_block {

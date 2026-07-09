@@ -203,7 +203,7 @@ impl Parser {
         let try_block = self.parse_block()?;
 
         let mut catch_variable = None;
-        let mut catch_block = Vec::new();
+        let mut catch_block = None;
 
         if self.current_token() == &Token::Keyword("catch".to_string()) {
             self.advance();
@@ -217,7 +217,7 @@ impl Parser {
                 self.consume(&Token::Delimiter(")".to_string()), "Expected ')' after catch variable")?;
             }
             self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'catch'")?;
-            catch_block = self.parse_block()?;
+            catch_block = Some(self.parse_block()?);
         }
 
         let mut finally_block = None;
@@ -225,6 +225,10 @@ impl Parser {
             self.advance();
             self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'finally'")?;
             finally_block = Some(self.parse_block()?);
+        }
+
+        if catch_block.is_none() && finally_block.is_none() {
+            return Err("Syntax Error: 'try' statement must have a 'catch' or 'finally' block".to_string());
         }
 
         Ok(Statement::TryCatchStatement { try_block, catch_variable, catch_block, finally_block })

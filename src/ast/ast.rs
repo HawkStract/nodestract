@@ -8,7 +8,7 @@ pub enum Statement {
     SwitchStatement { discriminant: Expression, cases: Vec<(Expression, Vec<Statement>)>, default_case: Option<Vec<Statement>> },
     ReturnStatement { value: Expression },
     FunctionDecl { name: String, params: Vec<String>, body: Vec<Statement> },
-    TryCatchStatement { try_block: Vec<Statement>, catch_variable: Option<String>, catch_block: Vec<Statement>, finally_block: Option<Vec<Statement>> },
+    TryCatchStatement { try_block: Vec<Statement>, catch_variable: Option<String>, catch_block: Option<Vec<Statement>>, finally_block: Option<Vec<Statement>> },
     ThrowStatement { value: Expression },
     Break,
     Continue,

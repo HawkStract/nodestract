@@ -66,9 +66,27 @@ impl Interpreter {
                 Value::Null
             }
             Expression::BinaryOp { left, operator, right } => {
-                let l = self.eval_expression(left);
-                let r = self.eval_expression(right);
-                self.eval_binary_op(l, operator, r)
+                if operator == "&&" {
+                    let l = self.eval_expression(left);
+                    if !l.is_truthy() {
+                        Value::Boolean(false)
+                    } else {
+                        let r = self.eval_expression(right);
+                        Value::Boolean(r.is_truthy())
+                    }
+                } else if operator == "||" {
+                    let l = self.eval_expression(left);
+                    if l.is_truthy() {
+                        Value::Boolean(true)
+                    } else {
+                        let r = self.eval_expression(right);
+                        Value::Boolean(r.is_truthy())
+                    }
+                } else {
+                    let l = self.eval_expression(left);
+                    let r = self.eval_expression(right);
+                    self.eval_binary_op(l, operator, r)
+                }
             }
             Expression::UnaryOp { operator, operand } => {
                 let val = self.eval_expression(operand);

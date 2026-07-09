@@ -316,4 +316,25 @@ mod tests {
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("only allowed inside loops"));
     }
+
+    #[test]
+    fn test_short_circuit_and_try_finally_and_dot_notation() {
+        let mut engine = Engine::new();
+        
+        // 1. Test corto circuito (non deve sollevare errore per variabile indefinita)
+        let source_sc = "importa italiano da translate\ncrea x = falso && indefinita\ncrea y = vero || indefinita\n";
+        engine.run(source_sc);
+        assert!(engine.interpreter.exception.is_none());
+
+        // 2. Test propagazione eccezione try-finally senza catch
+        let source_tf = "importa italiano da translate\nprova {\nlancia \"errore_test\"\n} infine {\n}\n";
+        engine.run(source_tf);
+        assert!(engine.interpreter.exception.is_some());
+        
+        // 3. Test notazione con punto
+        let source_dot = "importa italiano da translate\ncrea mappa = { \"nome\": \"mario\" }\ncrea nome_val = mappa.nome\n";
+        engine.run(source_dot);
+        assert!(engine.interpreter.exception.is_none());
+        assert_eq!(engine.interpreter.get_var("nome_val"), crate::engine::value::Value::String("mario".to_string()));
+    }
 }

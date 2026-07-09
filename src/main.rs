@@ -7,7 +7,7 @@ use crate::engine::Engine;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    // If no arguments are provided, show welcome screen
+    // Senza argomenti mostra la schermata di benvenuto
     if args.len() < 2 {
         welcome::show_welcome();
         return;

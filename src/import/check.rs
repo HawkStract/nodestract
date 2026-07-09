@@ -1,8 +1,7 @@
 use crate::engine::import::ImportManager;
 use crate::engine::translate::TranslationEngine;
 
-/// Validates the import block at the beginning of the file, registers active imports,
-/// and returns the stripped source code along with the populated ImportManager.
+/// Valida gli import all'inizio del file, li registra e restituisce il sorgente ripulito dagli import.
 pub fn validate_imports(
     source: &str,
     translation_engine: &TranslationEngine,
@@ -14,9 +13,13 @@ pub fn validate_imports(
     let mut has_imported_any_language = false;
 
     for (line_num, line) in source.lines().enumerate() {
-        let trimmed = line.trim();
+        let mut clean_line = line.to_string();
+        if let Some(pos) = clean_line.find("//") {
+            clean_line = clean_line[..pos].to_string();
+        }
+        let trimmed = clean_line.trim();
 
-        // Handle multi-line comment state
+        // Gestione dei commenti multilinea
         if inside_multiline_comment {
             if trimmed.contains("*/") {
                 inside_multiline_comment = false;
@@ -34,8 +37,8 @@ pub fn validate_imports(
             continue;
         }
 
-        // Skip empty lines or single-line comments
-        if trimmed.is_empty() || trimmed.starts_with("//") {
+        // Ignora linee vuote o commenti completi
+        if trimmed.is_empty() {
             stripped_lines.push(line.to_string());
             continue;
         }
@@ -52,7 +55,7 @@ pub fn validate_imports(
             continue;
         }
 
-        // Check if the first word maps to the canonical "import" keyword
+        // Controlla se la prima parola corrisponde a "import"
         let temp_manager = ImportManager::new();
         let is_import_stmt = translation_engine
             .lookup(words[0], &temp_manager)
@@ -77,7 +80,7 @@ pub fn validate_imports(
             let parent = words[len - 1];
             let from_keyword = words[len - 2];
 
-            // Verify "from" keyword
+            // Controlla il keyword "from"
             let is_from = translation_engine
                 .lookup(from_keyword, &temp_manager)
                 .map_or(false, |kw| kw == "from");
@@ -92,12 +95,12 @@ pub fn validate_imports(
 
             let members = &words[1..len - 2];
             for &member in members {
-                // Translate member to its canonical English form (e.g. "italiano" -> "italian")
+                // Traduce il membro nella forma inglese canonica (es. "italiano" -> "italian")
                 let canonical_member = translation_engine
                     .lookup_import(member, parent, &import_manager)
                     .unwrap_or(member);
 
-                // Register import in ImportManager
+                // Registra l'import
                 if !import_manager.import_member(canonical_member, parent) {
                     return Err(format!(
                         "Import Error (Line {}): Cannot import '{}' from '{}'",
@@ -112,10 +115,10 @@ pub fn validate_imports(
                 }
             }
 
-            // Preserve line count by replacing import line with an empty line
+            // Sostituisce la riga con una vuota per mantenere corretti i numeri di riga negli errori
             stripped_lines.push("".to_string());
         } else {
-            // First non-import line found. All future imports are illegal.
+            // Trovata la prima riga di codice reale, chiude la fase di import
             imports_ended = true;
             stripped_lines.push(line.to_string());
         }
@@ -145,9 +148,8 @@ mod tests {
         let stripped_lines: Vec<&str> = stripped.lines().collect();
         
         assert_eq!(original_lines.len(), stripped_lines.len());
-        // Verify that the import line is now empty
+        // Verifica che la riga di import sia vuota e le successive intatte
         assert_eq!(stripped_lines[0], "");
-        // Verify that the subsequent lines are intact and on the same line index
         assert_eq!(stripped_lines[1], "// Un commento");
         assert_eq!(stripped_lines[2], "");
         assert_eq!(stripped_lines[3], "scrivi(\"ciao\")");

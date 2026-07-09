@@ -1,4 +1,4 @@
-use crate::engine::ast::Statement;
+use crate::engine::ast::{Statement, Expression};
 use crate::engine::value::Value;
 use super::Interpreter;
 
@@ -13,9 +13,45 @@ impl Interpreter {
                 let val = self.eval_expression(value);
                 self.define_var(name.clone(), val, *is_mutable);
             }
-            Statement::Assignment { name, value } => {
+            Statement::Assignment { target, value } => {
                 let val = self.eval_expression(value);
-                self.set_var(name.clone(), val);
+                
+                let mut path = Vec::new();
+                let mut current = target;
+                while let Expression::Index { target: inner_target, index } = current {
+                    let idx_val = self.eval_expression(index);
+                    path.push(idx_val);
+                    current = inner_target;
+                }
+                
+                let var_name = match current {
+                    Expression::Variable(name) => name,
+                    _ => {
+                        let err_msg = "Target di assegnazione non valido.".to_string();
+                        println!("Runtime Error: {}", err_msg);
+                        self.exception = Some(Value::String(err_msg));
+                        return;
+                    }
+                };
+                
+                path.reverse();
+                
+                if let Some(entry) = self.get_var_mut(var_name) {
+                    if !entry.is_mutable {
+                        let err_msg = format!("Impossibile assegnare a una costante '{}'.", var_name);
+                        println!("Runtime Error: {}", err_msg);
+                        self.exception = Some(Value::String(err_msg));
+                        return;
+                    }
+                    if let Err(err) = Self::mutate_value_at_path(&mut entry.value, &path, val) {
+                        println!("Runtime Error: {}", err);
+                        self.exception = Some(Value::String(err));
+                    }
+                } else {
+                    let err_msg = format!("Variabile '{}' non dichiarata prima dell'assegnazione.", var_name);
+                    println!("Runtime Error: {}", err_msg);
+                    self.exception = Some(Value::String(err_msg));
+                }
             }
             Statement::IfStatement { condition, then_branch, else_branch } => {
                 let raw_cond = self.eval_expression(condition);

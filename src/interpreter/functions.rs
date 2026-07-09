@@ -11,7 +11,7 @@ use super::net;
 impl Interpreter {
     pub fn handle_function_call(&mut self, target: &str, args: &Vec<Expression>) -> Value {
         match target {
-            // IO operations
+            // Operazioni di I/O
             "print" => {
                 let mut output = String::new();
                 for a in args {
@@ -36,7 +36,7 @@ impl Interpreter {
                 }
             }
 
-            // File operations
+            // Operazioni su File System
             "read" => {
                 if let Some(path_expr) = args.get(0) {
                     let path_val = self.eval_expression(path_expr);
@@ -195,7 +195,7 @@ impl Interpreter {
                 }
             }
 
-            // General utility operations
+            // Utility generali
             "len" => {
                 if let Some(arg) = args.get(0) {
                     let val = self.eval_expression(arg);
@@ -234,7 +234,7 @@ impl Interpreter {
                 std::process::exit(0);
             }
 
-            // Network operations
+            // Operazioni di rete
             "fetch" => {
                 if let Some(url_expr) = args.get(0) {
                     let url_val = self.eval_expression(url_expr);
@@ -253,7 +253,7 @@ impl Interpreter {
                 }
             }
 
-            // User-defined function call fallback
+            // Fallback per chiamate a funzioni definite dall'utente
             _ => {
                 if let Some(func_stmt) = self.functions.get(target).cloned() {
                     if let Statement::FunctionDecl { params, body, .. } = func_stmt {

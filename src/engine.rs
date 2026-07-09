@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_imports)]
 #[path = "lexer/lexer.rs"]
 pub mod lexer;
 #[path = "ast/ast.rs"]
@@ -31,7 +30,7 @@ pub struct Engine {
 }
 
 impl Engine {
-    /// Create a new Engine instance.
+    /// Inizializza una nuova istanza dell'Engine.
     pub fn new() -> Self {
         let translation_engine = TranslationEngine::new();
         let import_manager = ImportManager::new();
@@ -43,9 +42,9 @@ impl Engine {
         }
     }
 
-    /// Runs the complete NodeStract pipeline for a given source code.
+    /// Avvia la pipeline completa di NodeStract per un sorgente fornito.
     pub fn run(&mut self, source: &str) {
-        // 1. Extract and validate imports (line-by-line)
+        // 1. Estrae e valida gli import (riga per riga)
         let (stripped_source, active_import_manager) = match check::validate_imports(source, &self.translation_engine) {
             Ok(res) => res,
             Err(err_msg) => {
@@ -55,14 +54,14 @@ impl Engine {
         };
         self.import_manager = active_import_manager;
 
-        // 2. Build filtered engine (active keywords vocabulary)
+        // 2. Costruisce il vocabolario di keyword attive (FilteredEngine)
         let filtered_engine = filter::FilteredEngine::new(&self.translation_engine, &self.import_manager);
 
-        // 3. Tokenize the stripped source code
+        // 3. Tokenizza il sorgente ripulito dagli import
         let mut lexer = Lexer::new(&stripped_source);
         let final_tokens = lexer.tokenize(&self.translation_engine, &filtered_engine);
 
-        // Verify that any built-in functions referenced in the code are actually imported
+        // Verifica che le funzioni di sistema usate siano effettivamente importate
         for token in &final_tokens {
             if let Token::Identifier(ref name) = token {
                 if let Some((canonical, module)) = self.translation_engine.get_builtin_info(name) {
@@ -77,7 +76,7 @@ impl Engine {
             }
         }
 
-        // 4. Run Parser for structural and delimiter validation
+        // 4. Esegue il parsing e la validazione sintattica dei delimitatori
         let mut parser = Parser::new(final_tokens.clone());
         match parser.parse() {
             Ok(program) => {
@@ -93,7 +92,7 @@ impl Engine {
         }
     }
 
-    /// Reads a file from disk and runs the compiler pipeline.
+    /// Legge un file da disco e lo esegue nella pipeline.
     pub fn run_file(&mut self, filename: &str) {
         match std::fs::read_to_string(filename) {
             Ok(content) => {

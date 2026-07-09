@@ -3,19 +3,18 @@ use crate::engine::translate::TranslationEngine;
 use crate::engine::import::ImportManager;
 
 pub struct FilteredEngine {
-    // Maps lowercase, normalized words to their canonical English forms
+    // Mappa le parole normalizzate in minuscolo alle loro forme canoniche inglesi
     active_keywords: HashMap<String, String>,
 }
 
 impl FilteredEngine {
-    /// Builds a new FilteredEngine containing only keywords authorized by active imports.
-    /// It automatically disables the import/from keywords and language names.
+    /// Crea un FilteredEngine con solo le keyword autorizzate dagli import attivi.
     pub fn new(translation: &TranslationEngine, import_manager: &ImportManager) -> Self {
         let mut active_keywords = HashMap::new();
 
         for (normalized_word, candidates) in &translation.keyword_map {
             for (canonical, module, language) in candidates {
-                // 1. Automatically disable core bootstrap keywords and language names
+                // Disabilita le keyword di bootstrap ed i nomi delle lingue
                 if canonical == "import"
                     || canonical == "from"
                     || canonical == "english"
@@ -29,7 +28,7 @@ impl FilteredEngine {
                     continue;
                 }
 
-                // 2. Keep keyword if its language module is active
+                // Conserva la keyword se la lingua di appartenenza è attiva
                 if language == "english"
                     || language == "italian"
                     || language == "spanish"
@@ -42,7 +41,7 @@ impl FilteredEngine {
                         active_keywords.insert(normalized_word.clone(), canonical.clone());
                     }
                 }
-                // 3. Keep built-in if its library module is active
+                // Conserva il built-in se il rispettivo modulo è attivo
                 else if module == "nio"
                     || module == "nmath"
                     || module == "nfs"
@@ -58,7 +57,7 @@ impl FilteredEngine {
         Self { active_keywords }
     }
 
-    /// Looks up a word in the active/authorized keywords set.
+    /// Cerca una parola nel set di keyword attive.
     pub fn lookup(&self, word: &str, translation: &TranslationEngine) -> Option<&str> {
         let normalized = translation.normalize(word);
         self.active_keywords.get(&normalized).map(|s| s.as_str())

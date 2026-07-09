@@ -1,16 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
 pub struct ImportManager {
-    // Maps a parent module to the set of its allowed subimports
+    // Associa un modulo genitore ai suoi sottomoduli/funzioni
     allowed_imports: HashMap<String, HashSet<String>>,
-    // Parent modules that are active (fully or partially imported)
+    // Moduli genitori attivi
     active_parents: HashSet<String>,
-    // Specific members that have been imported individually
+    // Singoli membri importati singolarmente
     active_members: HashSet<String>,
 }
 
 impl ImportManager {
-    /// Create a new ImportManager, loading the parent/subimport mappings at compile-time.
+    /// Crea un nuovo ImportManager caricando le associazioni a tempo di compilazione.
     pub fn new() -> Self {
         let json_content = include_str!("import.json");
         let allowed: HashMap<String, Vec<String>> = serde_json::from_str(json_content).unwrap_or_default();
@@ -26,7 +26,7 @@ impl ImportManager {
         }
     }
 
-    /// Import an entire parent module (e.g. `import nio`).
+    /// Importa un intero modulo genitore (es. `importa nio`).
     pub fn import_all(&mut self, parent: &str) -> bool {
         if let Some(members) = self.allowed_imports.get(parent) {
             self.active_parents.insert(parent.to_string());
@@ -39,8 +39,8 @@ impl ImportManager {
         }
     }
 
-    /// Import a specific member from a parent module (e.g. `import * from translate` or `import sin from nmath`).
-    /// The wildcard "*" imports all subimports/members of that parent.
+    /// Importa un membro specifico da un modulo genitore.
+    /// Il carattere jolly "*" importa tutti i membri.
     pub fn import_member(&mut self, member: &str, parent: &str) -> bool {
         if member == "*" {
             if let Some(members) = self.allowed_imports.get(parent) {
@@ -66,12 +66,12 @@ impl ImportManager {
         }
     }
 
-    /// Check if a specific member is active.
+    /// Verifica se un membro specifico è attivo.
     pub fn is_member_active(&self, member: &str, _parent: &str) -> bool {
         self.active_members.contains(member)
     }
 
-    /// Check if a parent module is active.
+    /// Verifica se un modulo genitore è attivo.
     pub fn is_parent_active(&self, parent: &str) -> bool {
         self.active_parents.contains(parent)
     }
@@ -85,22 +85,22 @@ mod tests {
     fn test_hierarchical_imports() {
         let mut manager = ImportManager::new();
 
-        // Wildcard import (import * from translate)
+        // Import con wildcard
         assert!(manager.import_member("*", "translate"));
         assert!(manager.is_member_active("italian", "translate"));
         assert!(manager.is_member_active("english", "translate"));
 
-        // Valid member import
+        // Import di un singolo membro valido
         let mut manager2 = ImportManager::new();
         assert!(manager2.import_member("italian", "translate"));
         assert!(manager2.is_member_active("italian", "translate"));
         assert!(!manager2.is_member_active("english", "translate"));
 
-        // Invalid member-parent combination (e.g. import italian from english)
+        // Associazione membro-genitore non valida
         assert!(!manager2.import_member("italian", "english"));
         assert!(!manager2.is_parent_active("english"));
 
-        // Valid math import
+        // Import matematico valido
         assert!(manager2.import_member("sin", "nmath"));
         assert!(manager2.is_member_active("sin", "nmath"));
         assert!(!manager2.is_member_active("cos", "nmath"));

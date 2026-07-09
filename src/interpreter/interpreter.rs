@@ -40,7 +40,7 @@ impl Interpreter {
         }
     }
 
-    /// Load top-level definitions like functions
+    /// Carica le definizioni globali come le funzioni
     pub fn load_program(&mut self, program: Program) {
         for stmt in &program.statements {
             match stmt {
@@ -54,7 +54,7 @@ impl Interpreter {
         }
     }
 
-    /// Runs the program execution beginning from the main function
+    /// Esegue il programma partendo dalla funzione "main" se presente, altrimenti esegue le istruzioni globali.
     pub fn run(&mut self, program: Program) {
         self.load_program(program);
         if let Some(func_stmt) = self.functions.get("main").cloned() {
@@ -129,5 +129,51 @@ impl Interpreter {
 
     pub fn define_var(&mut self, name: String, value: Value, is_mutable: bool) {
         self.current_scope().insert(name, VarEntry { value, is_mutable });
+    }
+
+    pub fn get_var_mut(&mut self, name: &str) -> Option<&mut VarEntry> {
+        let start_idx = self.fn_scope_starts.last().cloned().unwrap_or(0);
+        let mut target_idx = None;
+        for idx in (start_idx..self.scopes.len()).rev() {
+            if self.scopes[idx].contains_key(name) {
+                target_idx = Some(idx);
+                break;
+            }
+        }
+        if let Some(idx) = target_idx {
+            return self.scopes[idx].get_mut(name);
+        }
+        if start_idx > 0 {
+            if self.scopes[0].contains_key(name) {
+                return self.scopes[0].get_mut(name);
+            }
+        }
+        None
+    }
+
+    pub fn mutate_value_at_path(val: &mut Value, path: &[Value], new_val: Value) -> Result<(), String> {
+        if path.is_empty() {
+            *val = new_val;
+            return Ok(());
+        }
+        match val {
+            Value::Array(arr) => {
+                let idx = match &path[0] {
+                    Value::Integer(i) => *i as usize,
+                    Value::Float(f) => *f as usize,
+                    _ => return Err("L'indice dell'array deve essere un numero intero".to_string()),
+                };
+                if idx >= arr.len() {
+                    return Err("Indice dell'array fuori dai limiti".to_string());
+                }
+                Self::mutate_value_at_path(&mut arr[idx], &path[1..], new_val)
+            }
+            Value::Map(map) => {
+                let key = path[0].to_string();
+                let entry = map.entry(key).or_insert(Value::Null);
+                Self::mutate_value_at_path(entry, &path[1..], new_val)
+            }
+            _ => Err("Impossibile indicizzare questo tipo di dato".to_string()),
+        }
     }
 }

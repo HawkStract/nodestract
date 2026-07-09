@@ -1,0 +1,26 @@
+importa italiano da translate
+importa * da nio
+
+crea arr = [1, 2, 3]
+stampa("Originale:", arr)
+arr[0] = 99
+stampa("Modificato arr[0]:", arr)
+se (arr[0] == 99) {
+    stampa("Array Index Assign OK")
+} altrimenti {
+    stampa("FAIL: arr[0] != 99")
+}
+
+crea dizionario = {
+    "chiave": "valore",
+    "numero": 42
+}
+stampa("Originale map:", dizionario)
+dizionario["chiave"] = "nuovo_valore"
+dizionario["nuova_chiave"] = 100
+stampa("Modificato map:", dizionario)
+se (dizionario["chiave"] == "nuovo_valore" && dizionario["nuova_chiave"] == 100) {
+    stampa("Map Index Assign OK")
+} altrimenti {
+    stampa("FAIL: map mutation failed")
+}

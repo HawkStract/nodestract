@@ -1,8 +1,7 @@
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Statement {
     VarDecl { is_mutable: bool, name: String, value: Expression },
-    Assignment { name: String, value: Expression },
+    Assignment { target: Expression, value: Expression },
     IfStatement { condition: Expression, then_branch: Vec<Statement>, else_branch: Option<Vec<Statement>> },
     WhileStatement { condition: Expression, body: Vec<Statement> },
     ForStatement { iterator: String, start: Expression, end: Expression, body: Vec<Statement> },
@@ -17,7 +16,6 @@ pub enum Statement {
     Expr(Expression),
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Expression {
     LiteralStr(String),

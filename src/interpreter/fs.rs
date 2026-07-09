@@ -65,7 +65,10 @@ pub fn read_file(path: &str) -> Value {
             if path.ends_with(".json") {
                 match serde_json::from_str(&content) {
                     Ok(json_val) => serde_to_ns(json_val),
-                    Err(_) => Value::Null,
+                    Err(e) => {
+                        println!("FS Error: JSON malformato nel file '{}'. {}", path, e);
+                        Value::Null
+                    }
                 }
             } else {
                 Value::String(content)

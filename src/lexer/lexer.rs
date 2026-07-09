@@ -2,16 +2,16 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
-    // A generic keyword token holding the canonical English name (e.g., "let", "if", "sin")
+    // Keyword generico contenente il nome inglese canonico (es. "let", "if", "sin")
     Keyword(String),
 
-    // Identifiers and Literals
+    // Identificatori e letterali
     Identifier(String), StringLiteral(String), Number(f64),
 
-    // Delimiters (loaded dynamically from delimiters.json, e.g. "{", "}")
+    // Delimitatori (caricati da delimiters.json)
     Delimiter(String),
 
-    // Operators (loaded dynamically from operators.json, e.g. "==", "+")
+    // Operatori (caricati da operators.json)
     Operator(String),
 
     EOF,
@@ -19,7 +19,7 @@ pub enum Token {
 }
 
 impl Token {
-    /// Returns the string representation of a token for debug printing/testing.
+    /// Restituisce la rappresentazione testuale del token.
     pub fn to_string_repr(&self) -> String {
         match self {
             Token::Keyword(s) => s.clone(),
@@ -37,22 +37,22 @@ impl Token {
 pub struct Lexer {
     input: Vec<char>,
     position: usize,
-    // List of operators sorted by length descending to match longest first (e.g. "==" before "=")
+    // Operatori ordinati per lunghezza decrescente per matchare prima quelli più lunghi (es. "==" prima di "=")
     operators: Vec<(String, String)>,
-    // List of delimiters sorted by length descending
+    // Delimitatori ordinati per lunghezza decrescente
     delimiters: Vec<(String, String)>,
 }
 
 impl Lexer {
     pub fn new(input: &str) -> Self {
-        // Load delimiters and operators from JSON files at compile time
+        // Carica delimitatori e operatori dai JSON a tempo di compilazione
         let delimiters_json = include_str!("delimiters.json");
         let operators_json = include_str!("operators.json");
 
         let delimiters_map: HashMap<String, String> = serde_json::from_str(delimiters_json).unwrap_or_default();
         let operators_map: HashMap<String, String> = serde_json::from_str(operators_json).unwrap_or_default();
 
-        // Sort by key length descending for longest-match parsing
+        // Ordina per lunghezza decrescente per garantire la corrispondenza più lunga (longest-match)
         let mut delimiters: Vec<(String, String)> = delimiters_map.into_iter().collect();
         delimiters.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
 
@@ -67,19 +67,19 @@ impl Lexer {
         }
     }
 
-    /// Tokenizes the input string into a list of generic Tokens.
+    /// Converte la stringa sorgente in un vettore di Token.
     pub fn tokenize(&mut self, translation: &crate::engine::translate::TranslationEngine, filtered_engine: &crate::engine::filter::FilteredEngine) -> Vec<Token> {
         let mut tokens = Vec::new();
         while self.position < self.input.len() {
             let char = self.input[self.position];
 
-            // 1. Skip whitespaces
+            // 1. Salta gli spazi bianchi
             if char.is_whitespace() {
                 self.position += 1;
                 continue;
             }
 
-            // 2. Skip comments
+            // 2. Salta i commenti
             if self.peek_str("//") {
                 self.skip_comment();
                 continue;
@@ -89,7 +89,7 @@ impl Lexer {
                 continue;
             }
 
-            // 3. Try to match operators (longest match first)
+            // 3. Cerca di fare match con gli operatori (dal più lungo)
             let mut matched_op = None;
             for (op_symbol, _) in &self.operators {
                 if self.peek_str(op_symbol) {
@@ -103,7 +103,7 @@ impl Lexer {
                 continue;
             }
 
-            // 4. Try to match delimiters (longest match first)
+            // 4. Cerca di fare match con i delimitatori (dal più lungo)
             let mut matched_delim = None;
             for (delim_symbol, _) in &self.delimiters {
                 if self.peek_str(delim_symbol) {
@@ -117,25 +117,25 @@ impl Lexer {
                 continue;
             }
 
-            // 5. Match string literals
+            // 5. Riconosce le stringhe letterali
             if char == '"' {
                 tokens.push(self.read_string());
                 continue;
             }
 
-            // 6. Match numbers
+            // 6. Riconosce i numeri
             if char.is_numeric() {
                 tokens.push(self.read_number());
                 continue;
             }
 
-            // 7. Match identifiers/keywords
+            // 7. Riconosce identificatori/keyword
             if char.is_alphabetic() || char == '_' {
                 tokens.push(self.read_identifier(translation, filtered_engine));
                 continue;
             }
 
-            // 8. Unknown characters
+            // 8. Carattere sconosciuto
             tokens.push(Token::Unknown(char));
             self.position += 1;
         }
@@ -164,7 +164,7 @@ impl Lexer {
         }
         let text: String = self.input[start..self.position].iter().collect();
 
-        // Translate the keyword using the filtered engine
+        // Traduce il keyword usando il motore filtrato
         if let Some(canonical) = filtered_engine.lookup(&text, translation) {
             Token::Keyword(canonical.to_string())
         } else {

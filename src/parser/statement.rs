@@ -3,7 +3,7 @@ use crate::engine::lexer::Token;
 use super::Parser;
 
 impl Parser {
-    /// Parses a single statement from the token stream
+    /// Analizza un singolo statement.
     pub fn parse_statement(&mut self) -> Result<Statement, String> {
         let token = self.current_token().clone();
         match token {
@@ -51,7 +51,7 @@ impl Parser {
     }
 
     fn parse_var_decl(&mut self, is_mutable: bool) -> Result<Statement, String> {
-        self.advance(); // consume let/const
+        self.advance();
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => return Err("Expected identifier for variable name".to_string()),
@@ -63,7 +63,7 @@ impl Parser {
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume if
+        self.advance();
         let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
         if has_paren {
             self.advance();
@@ -88,7 +88,7 @@ impl Parser {
     }
 
     fn parse_while_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume while
+        self.advance();
         let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
         if has_paren {
             self.advance();
@@ -106,7 +106,7 @@ impl Parser {
     }
 
     fn parse_for_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume for
+        self.advance();
         let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
         if has_paren {
             self.advance();
@@ -121,7 +121,7 @@ impl Parser {
         self.consume(&Token::Keyword("in".to_string()), "Expected 'in' keyword in for loop")?;
         let start = self.parse_expression()?;
 
-        // Support optional range operator like '..'
+        // Gestisce l'operatore opzionale di intervallo '..'
         let mut end = start.clone();
         if let Token::Operator(ref op) = self.current_token() {
             if op == ".." {
@@ -142,7 +142,7 @@ impl Parser {
     }
 
     fn parse_switch_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume switch
+        self.advance();
         let has_paren = self.current_token() == &Token::Delimiter("(".to_string());
         if has_paren {
             self.advance();
@@ -198,7 +198,7 @@ impl Parser {
     }
 
     fn parse_try_catch_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume try
+        self.advance();
         self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'try'")?;
         let try_block = self.parse_block()?;
 
@@ -206,7 +206,7 @@ impl Parser {
         let mut catch_block = Vec::new();
 
         if self.current_token() == &Token::Keyword("catch".to_string()) {
-            self.advance(); // consume catch
+            self.advance();
             let has_var_paren = self.current_token() == &Token::Delimiter("(".to_string());
             if has_var_paren {
                 self.advance();
@@ -222,7 +222,7 @@ impl Parser {
 
         let mut finally_block = None;
         if self.current_token() == &Token::Keyword("finally".to_string()) {
-            self.advance(); // consume finally
+            self.advance();
             self.consume(&Token::Delimiter("{".to_string()), "Expected '{' after 'finally'")?;
             finally_block = Some(self.parse_block()?);
         }
@@ -231,19 +231,19 @@ impl Parser {
     }
 
     fn parse_throw_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume throw
+        self.advance();
         let value = self.parse_expression()?;
         Ok(Statement::ThrowStatement { value })
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume return
+        self.advance();
         let value = self.parse_expression()?;
         Ok(Statement::ReturnStatement { value })
     }
 
     fn parse_function(&mut self) -> Result<Statement, String> {
-        self.advance(); // consume function
+        self.advance();
         let name = match self.current_token() {
             Token::Identifier(s) => s.clone(),
             _ => return Err("Expected identifier for function name".to_string()),
@@ -284,50 +284,44 @@ impl Parser {
     }
 
     fn parse_identifier_statement(&mut self) -> Result<Statement, String> {
-        let name = match self.current_token() {
-            Token::Identifier(s) => s.clone(),
-            _ => unreachable!(),
-        };
+        let lhs = self.parse_expression()?;
 
-        let next = self.peek().clone();
-        match next {
-            Token::Operator(ref op) if op == "=" => {
-                self.advance(); // consume name
-                self.advance(); // consume =
-                let value = self.parse_expression()?;
-                Ok(Statement::Assignment { name, value })
+        if let Token::Operator(ref op) = self.current_token() {
+            match op.as_str() {
+                "=" => {
+                    self.advance();
+                    let value = self.parse_expression()?;
+                    Ok(Statement::Assignment { target: lhs, value })
+                }
+                "++" | "--" => {
+                    let actual_op = if op == "++" { "+" } else { "-" };
+                    self.advance();
+                    Ok(Statement::Assignment {
+                        target: lhs.clone(),
+                        value: Expression::BinaryOp {
+                            left: Box::new(lhs),
+                            operator: actual_op.to_string(),
+                            right: Box::new(Expression::LiteralNum(1.0)),
+                        },
+                    })
+                }
+                "+=" | "-=" | "*=" | "/=" => {
+                    let actual_op = op[0..1].to_string();
+                    self.advance();
+                    let right = self.parse_expression()?;
+                    Ok(Statement::Assignment {
+                        target: lhs.clone(),
+                        value: Expression::BinaryOp {
+                            left: Box::new(lhs),
+                            operator: actual_op,
+                            right: Box::new(right),
+                        },
+                    })
+                }
+                _ => Ok(Statement::Expr(lhs)),
             }
-            Token::Operator(ref op) if op == "++" || op == "--" => {
-                let actual_op = if op == "++" { "+" } else { "-" };
-                self.advance(); // consume name
-                self.advance(); // consume ++/--
-                Ok(Statement::Assignment {
-                    name: name.clone(),
-                    value: Expression::BinaryOp {
-                        left: Box::new(Expression::Variable(name)),
-                        operator: actual_op.to_string(),
-                        right: Box::new(Expression::LiteralNum(1.0)),
-                    },
-                })
-            }
-            Token::Operator(ref op) if op == "+=" || op == "-=" || op == "*=" || op == "/=" => {
-                let actual_op = &op[0..1];
-                self.advance(); // consume name
-                self.advance(); // consume op
-                let right = self.parse_expression()?;
-                Ok(Statement::Assignment {
-                    name: name.clone(),
-                    value: Expression::BinaryOp {
-                        left: Box::new(Expression::Variable(name)),
-                        operator: actual_op.to_string(),
-                        right: Box::new(right),
-                    },
-                })
-            }
-            _ => {
-                let expr = self.parse_expression()?;
-                Ok(Statement::Expr(expr))
-            }
+        } else {
+            Ok(Statement::Expr(lhs))
         }
     }
 }

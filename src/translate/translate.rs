@@ -1,14 +1,12 @@
 use std::collections::HashMap;
 
 pub struct TranslationEngine {
-    // Maps lowercase, accent-normalized keywords to a list of (canonical, module, language) candidates
     pub(crate) keyword_map: HashMap<String, Vec<(String, String, String)>>,
-    // Maps canonical keywords to their required import module
     module_map: HashMap<String, String>,
 }
 
 impl TranslationEngine {
-    /// Create a new translation engine, loading ALL supported languages by default.
+    /// Crea il motore caricando tutte le lingue supportate.
     pub fn new() -> Self {
         let mut engine = Self {
             keyword_map: HashMap::new(),
@@ -55,7 +53,7 @@ impl TranslationEngine {
             for (canonical_kw, (translation, module)) in map {
                 let normalized = self.normalize(&translation);
                 
-                // Core bootstrap keywords and language names have no language dependency (always active for bootstrap)
+                // Le keyword di base e i nomi delle lingue non hanno dipendenze (sempre attivi per l'avvio)
                 let is_bootstrap = canonical_kw == "import" 
                     || canonical_kw == "from"
                     || canonical_kw == "english"
@@ -82,7 +80,7 @@ impl TranslationEngine {
         }
     }
 
-    /// Normalizes a string by converting it to lowercase and replacing accented/diacritic characters.
+    /// Normalizza una stringa in minuscolo e rimuove gli accenti.
     pub fn normalize(&self, text: &str) -> String {
         let mut normalized = String::new();
         for c in text.to_lowercase().chars() {
@@ -104,7 +102,7 @@ impl TranslationEngine {
         normalized
     }
 
-    /// Resolves a localized keyword to its canonical English form if its dependency module is active.
+    /// Risolve una keyword localizzata nella forma inglese canonica se il rispettivo modulo è importato.
     pub fn lookup(&self, word: &str, import_manager: &crate::engine::import::ImportManager) -> Option<&str> {
         let normalized = self.normalize(word);
         if let Some(candidates) = self.keyword_map.get(&normalized) {
@@ -124,7 +122,7 @@ impl TranslationEngine {
         None
     }
 
-    /// Special lookup during the import phase to resolve the member being imported before it is active.
+    /// Lookup speciale per la fase di import iniziale.
     pub fn lookup_import(&self, word: &str, parent: &str, import_manager: &crate::engine::import::ImportManager) -> Option<&str> {
         let normalized = self.normalize(word);
         if let Some(candidates) = self.keyword_map.get(&normalized) {
@@ -141,7 +139,7 @@ impl TranslationEngine {
         None
     }
 
-    /// Returns the module name required for a canonical keyword (e.g. "sin" -> "nmath", "let" -> "").
+    /// Restituisce il modulo richiesto per una keyword canonica (es. "sin" -> "nmath").
     pub fn required_module(&self, canonical_keyword: &str) -> &str {
         if let Some(module) = self.module_map.get(canonical_keyword) {
             if module == "english"
@@ -161,7 +159,7 @@ impl TranslationEngine {
         }
     }
 
-    /// Helper to identify if a word (independent of active imports) matches a known built-in function name.
+    /// Controlla se un identificatore corrisponde a una funzione built-in conosciuta.
     pub fn get_builtin_info(&self, word: &str) -> Option<(&str, &str)> {
         let normalized = self.normalize(word);
         if let Some(candidates) = self.keyword_map.get(&normalized) {

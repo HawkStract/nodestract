@@ -6,7 +6,7 @@ crea ris = richiedi("http://127.0.0.1:12345/notfound")
 stampa("Risultato GET 404:", ris)
 
 se (ris == nullo) {
-    stampa("GET 404 OK")
+    stampa("Gestione errore 404 (non trovato): OK")
 } altrimenti {
-    stampa("FAIL: GET 404 non ha restituito nullo")
+    stampa("ERRORE: la richiesta non trovata (404) non ha restituito nullo")
 }

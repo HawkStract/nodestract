@@ -12,7 +12,7 @@ crea ok = scrivi(path, dati)
 crea del_ok = elimina(path)
 
 se (ok == vero && del_ok == vero) {
-    stampa("Test 4 OK")
+    stampa("Test 4 superato: OK")
 } altrimenti {
-    stampa("FAIL: Test 4 failed")
+    stampa("ERRORE: Test 4 fallito")
 }

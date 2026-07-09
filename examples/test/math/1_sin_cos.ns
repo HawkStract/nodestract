@@ -11,5 +11,5 @@ stampa("cos(0):", c)
 se (s == 0.0 && c == 1.0) {
     stampa("Sin Cos OK")
 } altrimenti {
-    stampa("FAIL: sin/cos")
+    stampa("ERRORE: calcolo di seno o coseno errato")
 }

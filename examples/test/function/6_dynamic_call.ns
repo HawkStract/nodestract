@@ -16,7 +16,7 @@ crea ris2 = lista[0]()
 stampa("Ris2:", ris2)
 
 se (ris1 == "Ciao Mondo" && ris2 == "Ciao Mondo") {
-    stampa("Dynamic call OK")
+    stampa("Chiamata dinamica a funzione (tramite variabile stringa): OK")
 } altrimenti {
-    stampa("FAIL: Dynamic call failed")
+    stampa("ERRORE: La chiamata dinamica a funzione ha fallito")
 }

@@ -4,14 +4,14 @@ importa * da nio
 crea x = nullo
 
 se (x == nullo) {
-    stampa("Null comparison OK")
+    stampa("Confronto nullo: OK")
 } altrimenti {
-    stampa("FAIL: x != nullo")
+    stampa("ERRORE: il valore x non risulta nullo")
 }
 
 crea y = 10
 se (y != nullo) {
-    stampa("Not null comparison OK")
+    stampa("Confronto non nullo: OK")
 } altrimenti {
-    stampa("FAIL: y == nullo")
+    stampa("ERRORE: il valore y risulta nullo")
 }

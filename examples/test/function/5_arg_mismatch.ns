@@ -14,7 +14,7 @@ prova {
 }
 
 se (errore_rilevato == vero) {
-    stampa("Arg count mismatch OK")
+    stampa("Rilevamento del numero di argomenti errato: OK")
 } altrimenti {
-    stampa("FAIL: somma_tre(10, 20) non ha generato eccezione")
+    stampa("ERRORE: somma_tre(10, 20) non ha generato eccezione per arità insufficiente")
 }

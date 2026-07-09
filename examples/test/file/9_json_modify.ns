@@ -13,7 +13,7 @@ crea letto_2 = leggi(path)
 crea del_ok = elimina(path)
 
 se (letto_2["contatore"] == 2 && del_ok == vero) {
-    stampa("Test 9 OK")
+    stampa("Test 9 superato: OK")
 } altrimenti {
-    stampa("FAIL: Test 9 failed")
+    stampa("ERRORE: Test 9 fallito")
 }

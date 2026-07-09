@@ -10,7 +10,7 @@ crea letto = leggi(path)
 crea del_ok = elimina(path)
 
 se (letto[0] == 10 && letto[1] == 20 && letto[2] == 30 && del_ok == vero) {
-    stampa("Test 7 OK")
+    stampa("Test 7 superato: OK")
 } altrimenti {
-    stampa("FAIL: Test 7 failed")
+    stampa("ERRORE: Test 7 fallito")
 }

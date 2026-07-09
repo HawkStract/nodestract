@@ -66,5 +66,5 @@ stampa("Test 10: chiamata a mappa =", ris10)
 se (ris4 == 25 && ris5 == 36 && ris6 == 49 && ris7 == 24 && ris8 == nullo && ris9 == nullo && ris10 == nullo) {
     stampa("PRECEDENCE TESTS OK")
 } altrimenti {
-    stampa("FAIL: Precedence tests failed")
+    stampa("ERRORE: Test delle precedenze falliti")
 }

@@ -11,5 +11,5 @@ stampa("Massimo:", val_max)
 se (val_min == 15 && val_max == 30) {
     stampa("Min Max OK")
 } altrimenti {
-    stampa("FAIL: min/max")
+    stampa("ERRORE: determinazione di minimo o massimo errata")
 }

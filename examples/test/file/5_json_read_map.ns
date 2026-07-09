@@ -15,7 +15,7 @@ crea del_ok = elimina(path)
 stampa("Letto:", letto)
 
 se (letto["titolo"] == "Programmazione" && letto["codice"] == 101 && del_ok == vero) {
-    stampa("Test 5 OK")
+    stampa("Test 5 superato: OK")
 } altrimenti {
-    stampa("FAIL: Test 5 failed")
+    stampa("ERRORE: Test 5 fallito")
 }

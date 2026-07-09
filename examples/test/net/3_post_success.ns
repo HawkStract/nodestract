@@ -7,7 +7,7 @@ crea ris = invia("http://127.0.0.1:12345/post", payload)
 stampa("Risultato POST:", ris)
 
 se (ris == "POST received") {
-    stampa("POST success OK")
+    stampa("Richiesta POST completata: OK")
 } altrimenti {
-    stampa("FAIL: POST non ha restituito il valore previsto")
+    stampa("ERRORE: la richiesta POST non ha restituito il valore corretto")
 }

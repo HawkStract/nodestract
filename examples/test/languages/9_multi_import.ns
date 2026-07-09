@@ -7,7 +7,7 @@ let y = 20
 stampa("x:", x, "y:", y)
 
 se (x == 10 && y == 20) {
-    stampa("Multi import OK")
+    stampa("Importazione multipla concorrente: OK")
 } altrimenti {
-    stampa("FAIL: Multi import failed")
+    stampa("ERRORE: L'importazione multipla ha fallito")
 }

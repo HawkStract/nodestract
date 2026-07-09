@@ -16,7 +16,7 @@ prova {
 
 stampa("Costante finale:", COSTANTE)
 se (errore_rilevato == vero && COSTANTE == 42) {
-    stampa("Constant protection OK")
+    stampa("Protezione costanti: OK")
 } altrimenti {
-    stampa("FAIL: Constant protection check failed or constant modified")
+    stampa("ERRORE: La protezione della costante ha fallito o la costante è stata modificata")
 }

@@ -12,7 +12,7 @@ stampa("Lettura proibita:", letto)
 stampa("Eliminazione proibita:", elimina_ok)
 
 se (scrivi_ok == falso && letto == nullo && elimina_ok == falso) {
-    stampa("Test 10 OK")
+    stampa("Test 10 superato: OK")
 } altrimenti {
-    stampa("FAIL: Test 10 failed")
+    stampa("ERRORE: Test 10 fallito")
 }

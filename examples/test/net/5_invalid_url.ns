@@ -6,7 +6,7 @@ crea ris = richiedi("http://invalid.domain.that.does.not.exist")
 stampa("Risultato invalid URL:", ris)
 
 se (ris == nullo) {
-    stampa("Invalid URL OK")
+    stampa("Gestione URL non valido: OK")
 } altrimenti {
-    stampa("FAIL: Invalid URL non ha restituito nullo")
+    stampa("ERRORE: la chiamata su URL non valido non ha restituito nullo")
 }

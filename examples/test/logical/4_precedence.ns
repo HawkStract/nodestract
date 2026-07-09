@@ -9,5 +9,5 @@ stampa("Precedenza logica:", ris)
 se (ris) {
     stampa("Logic precedence OK")
 } altrimenti {
-    stampa("FAIL: logic precedence")
+    stampa("ERRORE: precedenza logica errata")
 }

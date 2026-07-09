@@ -1,10 +1,10 @@
 importa italiano da translate
 importa * da nio
 
-se ("ciao") { stampa("String truthy OK") } altrimenti { stampa("FAIL: string truthy") }
-se ("") { stampa("FAIL: empty string truthy") } altrimenti { stampa("Empty string falsy OK") }
+se ("ciao") { stampa("Valutazione stringa non vuota come vera: OK") } altrimenti { stampa("ERRORE: stringa non vuota valutata come falsa") }
+se ("") { stampa("ERRORE: stringa vuota valutata come vera") } altrimenti { stampa("Valutazione stringa vuota come falsa: OK") }
 
-se (1) { stampa("Number 1 truthy OK") } altrimenti { stampa("FAIL: number 1 truthy") }
-se (0) { stampa("FAIL: number 0 truthy") } altrimenti { stampa("Number 0 falsy OK") }
+se (1) { stampa("Valutazione numero 1 come vero: OK") } altrimenti { stampa("ERRORE: numero 1 valutato come falso") }
+se (0) { stampa("ERRORE: numero 0 valutato come vero") } altrimenti { stampa("Valutazione numero 0 come falso: OK") }
 
-se (nullo) { stampa("FAIL: null truthy") } altrimenti { stampa("Null falsy OK") }
+se (nullo) { stampa("ERRORE: valore nullo valutato come vero") } altrimenti { stampa("Valutazione valore nullo come falso: OK") }

@@ -18,7 +18,7 @@ crea ris = chiamante()
 stampa("Risultato scoping:", ris)
 
 se (ris == 100) {
-    stampa("Lexical scoping OK")
+    stampa("Scoping lessicale delle variabili: OK")
 } altrimenti {
-    stampa("FAIL: Dynamic scoping occurred, found", ris)
+    stampa("ERRORE: Si è verificato uno scoping dinamico, trovato valore", ris)
 }

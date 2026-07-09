@@ -5,34 +5,34 @@ crea t = vero
 crea f = falso
 
 se (t) {
-    stampa("Bool true OK")
+    stampa("Booleano vero: OK")
 } altrimenti {
-    stampa("FAIL: true was false")
+    stampa("ERRORE: il valore vero è stato valutato falso")
 }
 
 se (f) {
-    stampa("FAIL: false was true")
+    stampa("ERRORE: il valore falso è stato valutato vero")
 } altrimenti {
-    stampa("Bool false OK")
+    stampa("Booleano falso: OK")
 }
 
 crea and_op = t && f
 se (and_op) {
-    stampa("FAIL: true && false was true")
+    stampa("ERRORE: l'operazione AND ha restituito vero per valori diversi")
 } altrimenti {
-    stampa("Bool AND OK")
+    stampa("Operazione logica AND: OK")
 }
 
 crea or_op = t || f
 se (or_op) {
-    stampa("Bool OR OK")
+    stampa("Operazione logica OR: OK")
 } altrimenti {
-    stampa("FAIL: true || false was false")
+    stampa("ERRORE: l'operazione OR ha restituito falso per valori veri")
 }
 
 crea not_op = !t
 se (not_op) {
-    stampa("FAIL: !true was true")
+    stampa("ERRORE: la negazione logica NOT ha fallito")
 } altrimenti {
-    stampa("Bool NOT OK")
+    stampa("Operazione logica NOT: OK")
 }

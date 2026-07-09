@@ -10,13 +10,13 @@ stampa("Concatenazione:", unione)
 
 // Uguaglianza
 se (str1 == "Ciao") {
-    stampa("Uguaglianza stringhe OK")
+    stampa("Uguaglianza stringhe: OK")
 } altrimenti {
-    stampa("FAIL: str1 == Ciao")
+    stampa("ERRORE: le stringhe non risultano uguali")
 }
 
 se (str1 != str2) {
-    stampa("Disuguaglianza stringhe OK")
+    stampa("Disuguaglianza stringhe: OK")
 } altrimenti {
-    stampa("FAIL: str1 != str2")
+    stampa("ERRORE: le due stringhe diverse risultano uguali")
 }

@@ -19,9 +19,9 @@ stampa("Divisione intera:", divisione_intera)
 stampa("Divisione float:", divisione_float)
 
 // Comparazione
-se (a > b) { stampa("Comparison > OK") }
-se (b < a) { stampa("Comparison < OK") }
-se (a >= 10) { stampa("Comparison >= OK") }
-se (b <= 3) { stampa("Comparison <= OK") }
-se (a == 10) { stampa("Comparison == OK") }
-se (a != b) { stampa("Comparison != OK") }
+se (a > b) { stampa("Confronto maggiore (>): OK") }
+se (b < a) { stampa("Confronto minore (<): OK") }
+se (a >= 10) { stampa("Confronto maggiore-uguale (>=): OK") }
+se (b <= 3) { stampa("Confronto minore-uguale (<=): OK") }
+se (a == 10) { stampa("Confronto uguaglianza (==): OK") }
+se (a != b) { stampa("Confronto disuguaglianza (!=): OK") }

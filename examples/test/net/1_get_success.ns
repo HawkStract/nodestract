@@ -6,7 +6,7 @@ crea ris = richiedi("http://127.0.0.1:12345/success")
 stampa("Risultato GET:", ris)
 
 se (ris == "Hello NodeStract") {
-    stampa("GET success OK")
+    stampa("Richiesta GET completata: OK")
 } altrimenti {
-    stampa("FAIL: GET non ha restituito il valore previsto")
+    stampa("ERRORE: la richiesta GET non ha restituito il valore corretto")
 }

@@ -6,7 +6,7 @@ crea ris = richiedi("http://127.0.0.1:12345/retry")
 stampa("Risultato Retry:", ris)
 
 se (ris == "Retry success") {
-    stampa("GET retry OK")
+    stampa("Riprova richiesta GET su errore server: OK")
 } altrimenti {
-    stampa("FAIL: GET retry non ha restituito il valore previsto")
+    stampa("ERRORE: la riprova della richiesta GET non ha restituito il valore corretto")
 }

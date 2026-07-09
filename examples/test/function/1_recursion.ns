@@ -12,7 +12,7 @@ crea ris = fattoriale(5)
 stampa("Fattoriale di 5:", ris)
 
 se (ris == 120) {
-    stampa("Recursion OK")
+    stampa("Ricorsione su singola funzione (fattoriale): OK")
 } altrimenti {
-    stampa("FAIL: fattoriale(5) != 120, era", ris)
+    stampa("ERRORE: fattoriale(5) != 120, era invece", ris)
 }

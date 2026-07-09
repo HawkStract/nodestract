@@ -11,5 +11,5 @@ stampa("Arrotondato:", arrotondato)
 se (valore_assoluto == 10.5 && arrotondato == 5) {
     stampa("Abs Round OK")
 } altrimenti {
-    stampa("FAIL: abs/round")
+    stampa("ERRORE: calcolo di valore assoluto o arrotondamento errato")
 }

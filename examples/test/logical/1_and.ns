@@ -4,23 +4,23 @@ importa * da nio
 se (vero && vero) {
     stampa("true && true OK")
 } altrimenti {
-    stampa("FAIL: true && true")
+    stampa("ERRORE: AND vero/vero ha fallito")
 }
 
 se (vero && falso) {
-    stampa("FAIL: true && false")
+    stampa("ERRORE: AND vero/falso ha fallito")
 } altrimenti {
     stampa("true && false OK")
 }
 
 se (falso && vero) {
-    stampa("FAIL: false && true")
+    stampa("ERRORE: AND falso/vero ha fallito")
 } altrimenti {
     stampa("false && true OK")
 }
 
 se (falso && falso) {
-    stampa("FAIL: false && false")
+    stampa("ERRORE: AND falso/falso ha fallito")
 } altrimenti {
     stampa("false && false OK")
 }

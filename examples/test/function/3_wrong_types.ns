@@ -15,5 +15,5 @@ prova {
 se (errore_rilevato == vero) {
     stampa("Wrong type handling OK")
 } altrimenti {
-    stampa("FAIL: raddoppia(cane) non ha generato eccezione")
+    stampa("ERRORE: raddoppia('cane') non ha generato eccezione per argomento non numerico")
 }

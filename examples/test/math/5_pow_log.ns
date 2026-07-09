@@ -11,5 +11,5 @@ stampa("ln(1):", l)
 se (p == 8.0 && l == 0.0) {
     stampa("Pow Log OK")
 } altrimenti {
-    stampa("FAIL: pow/log")
+    stampa("ERRORE: calcolo di potenza o logaritmo errato")
 }

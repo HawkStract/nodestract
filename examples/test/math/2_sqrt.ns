@@ -8,5 +8,5 @@ stampa("radq(16):", ris)
 se (ris == 4.0) {
     stampa("Sqrt OK")
 } altrimenti {
-    stampa("FAIL: sqrt")
+    stampa("ERRORE: calcolo della radice quadrata errato")
 }

@@ -11,13 +11,13 @@ se (vero) {
 
 // All'atto della dichiarazione sopra, non deve essersi eseguita!
 se (eseguita == vero) {
-    stampa("FAIL: nested function executed upon declaration")
+    stampa("ERRORE: la funzione nidificata è stata eseguita al momento della dichiarazione")
 } altrimenti {
     // Ora la chiamiamo
     nidificata()
     se (eseguita == vero) {
         stampa("Nested declaration OK")
     } altrimenti {
-        stampa("FAIL: nested function was not registered or failed to run")
+        stampa("ERRORE: la funzione nidificata non è stata registrata o non è stata eseguita")
     }
 }

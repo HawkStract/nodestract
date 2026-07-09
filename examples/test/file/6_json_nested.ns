@@ -15,7 +15,7 @@ crea letto = leggi(path)
 crea del_ok = elimina(path)
 
 se (letto["utente"]["id"] == 1 && letto["utente"]["ruoli"][0] == "admin" && del_ok == vero) {
-    stampa("Test 6 OK")
+    stampa("Test 6 superato: OK")
 } altrimenti {
-    stampa("FAIL: Test 6 failed")
+    stampa("ERRORE: Test 6 fallito")
 }

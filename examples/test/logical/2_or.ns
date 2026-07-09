@@ -4,23 +4,23 @@ importa * da nio
 se (vero || vero) {
     stampa("true || true OK")
 } altrimenti {
-    stampa("FAIL: true || true")
+    stampa("ERRORE: OR vero/vero ha fallito")
 }
 
 se (vero || falso) {
     stampa("true || false OK")
 } altrimenti {
-    stampa("FAIL: true || false")
+    stampa("ERRORE: OR vero/falso ha fallito")
 }
 
 se (falso || vero) {
     stampa("false || true OK")
 } altrimenti {
-    stampa("FAIL: false || true")
+    stampa("ERRORE: OR falso/vero ha fallito")
 }
 
 se (falso || falso) {
-    stampa("FAIL: false || false")
+    stampa("ERRORE: OR falso/falso ha fallito")
 } altrimenti {
     stampa("false || false OK")
 }

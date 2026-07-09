@@ -15,5 +15,5 @@ prova {
 se (errore_rilevato == vero) {
     stampa("Return mismatch handling OK")
 } altrimenti {
-    stampa("FAIL: get_nome() * 3 non ha generato eccezione")
+    stampa("ERRORE: get_nome() * 3 non ha generato eccezione per tipo non numerico")
 }

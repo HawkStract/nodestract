@@ -24,5 +24,5 @@ stampa("Dispari(4):", ris_dispari)
 se (ris_pari == vero && ris_dispari == falso) {
     stampa("Mutual calls OK")
 } altrimenti {
-    stampa("FAIL: Pari/dispari incorretto")
+    stampa("ERRORE: Calcolo di pari/dispari incorretto")
 }

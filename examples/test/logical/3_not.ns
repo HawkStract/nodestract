@@ -4,11 +4,11 @@ importa * da nio
 se (!falso) {
     stampa("!false OK")
 } altrimenti {
-    stampa("FAIL: !false")
+    stampa("ERRORE: negazione di falso errata")
 }
 
 se (!vero) {
-    stampa("FAIL: !true")
+    stampa("ERRORE: negazione di vero errata")
 } altrimenti {
     stampa("!true OK")
 }

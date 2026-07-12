@@ -136,8 +136,7 @@ impl Interpreter {
                 }
             }
             "random" => {
-                use rand::Rng;
-                Value::Float(rand::thread_rng().gen::<f64>())
+                Value::Float(fastrand::f64())
             }
             "round" => {
                 if let Some(arg) = args.get(0) {

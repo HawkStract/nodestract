@@ -2,7 +2,7 @@ use crate::engine::value::Value;
 use std::thread;
 use std::time::Duration;
 
-const MAX_RETRIES: u32 = 3;
+const MAX_ATTEMPTS: u32 = 3;
 
 fn get_agent() -> ureq::Agent {
     ureq::AgentBuilder::new()
@@ -35,12 +35,12 @@ where F: Fn(&ureq::Agent) -> Result<ureq::Response, ureq::Error>
                     ureq::Error::Transport(_) => true,
                 };
 
-                if is_server_error && attempt <= MAX_RETRIES {
+                if is_server_error && attempt < MAX_ATTEMPTS {
                     let wait = Duration::from_millis(500 * 2_u64.pow(attempt - 1));
                     thread::sleep(wait);
                     continue;
                 }
-                return Err(format!("NET ERROR: {} {} failed after {} attempts. {}", method_name, url, MAX_RETRIES, e));
+                return Err(format!("NET ERROR: {} {} failed after {} attempts. {}", method_name, url, MAX_ATTEMPTS, e));
             }
         }
     }

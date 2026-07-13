@@ -2,7 +2,7 @@
 name = "ns"
 version = "0.12.0"
 edition = "2021"
-authors = ["HawkStract"]
+authors = ["Christian Miglietta"]
 description = "The official compiler for the NodeStract (.ns) language"
 
 [dependencies]

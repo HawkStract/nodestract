@@ -43,13 +43,14 @@ impl Engine {
     }
 
     /// Avvia la pipeline completa di NodeStract per un sorgente fornito.
-    pub fn run(&mut self, source: &str) {
+    /// Restituisce `true` se l'esecuzione è terminata senza errori, `false` altrimenti.
+    pub fn run(&mut self, source: &str) -> bool {
         // 1. Estrae e valida gli import (riga per riga)
         let (stripped_source, active_import_manager) = match check::validate_imports(source, &self.translation_engine) {
             Ok(res) => res,
             Err(err_msg) => {
                 crate::welcome::show_error(&err_msg);
-                return;
+                return false;
             }
         };
         self.import_manager = active_import_manager;
@@ -73,20 +74,25 @@ impl Engine {
                         other => other.to_string(),
                     };
                     crate::welcome::show_error(&format!("Uncaught Exception: {}", exc_str));
+                    return false;
                 }
+                true
             }
             Err(err_msg) => {
                 crate::welcome::show_error(&err_msg);
+                false
             }
         }
     }
 
     /// Legge un file da disco e lo esegue nella pipeline.
+    /// Il messaggio di successo viene mostrato solo se l'esecuzione non ha prodotto errori.
     pub fn run_file(&mut self, filename: &str) {
         match std::fs::read_to_string(filename) {
             Ok(content) => {
-                self.run(&content);
-                crate::welcome::show_success("Execution finished successfully.");
+                if self.run(&content) {
+                    crate::welcome::show_success("Execution finished successfully.");
+                }
             }
             Err(_) => {
                 crate::welcome::show_error(&format!("Could not read file '{}'. Check the path.", filename));

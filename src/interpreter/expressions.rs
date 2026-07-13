@@ -115,10 +115,7 @@ impl Interpreter {
                 let mut resolved_name = None;
 
                 if let Expression::Variable(ref name) = **target {
-                    let is_builtin = matches!(
-                        name.as_str(),
-                        "print" | "input" | "read" | "write" | "delete" | "sin" | "cos" | "sqrt" | "random" | "round" | "min" | "max" | "abs" | "log" | "pow" | "len" | "sleep" | "exit" | "fetch" | "send"
-                    );
+                    let is_builtin = super::builtins::is_builtin(name.as_str());
                     let has_direct = is_builtin || self.functions.contains_key(name);
 
                     if has_direct {

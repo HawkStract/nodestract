@@ -25,7 +25,10 @@ impl fmt::Display for Value {
                 write!(f, "[{}]", elements.join(", "))
             }
             Value::Map(map) => {
-                let elements: Vec<String> = map.iter()
+                let mut entries: Vec<(&String, &Value)> = map.iter().collect();
+                entries.sort_by_key(|(k, _)| k.as_str());
+                let elements: Vec<String> = entries
+                    .iter()
                     .map(|(k, v)| format!("{}: {}", k, v))
                     .collect();
                 write!(f, "{{{}}}", elements.join(", "))

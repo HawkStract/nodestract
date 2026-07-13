@@ -8,6 +8,7 @@ pub mod ops;
 pub mod functions;
 pub mod fs;
 pub mod net;
+pub mod builtins;
 
 #[derive(Clone, Debug)]
 pub struct VarEntry {
@@ -52,7 +53,9 @@ impl Interpreter {
         }
     }
 
-    /// Esegue il programma partendo dalla funzione "main" se presente, altrimenti esegue le istruzioni globali.
+    /// Esegue il programma: registra le funzioni globali ed esegue le istruzioni
+    /// globali non-funzione (dichiarazioni di variabili, espressioni), poi,
+    /// se è presente una funzione di nome "main", ne esegue anche il corpo.
     pub fn run(&mut self, program: Program) {
         self.load_program(program);
         if let Some(func_stmt) = self.functions.get("main").cloned() {
@@ -136,10 +139,7 @@ impl Interpreter {
     }
 
     pub fn is_function_defined(&self, func_name: &str) -> bool {
-        match func_name {
-            "print" | "input" | "read" | "write" | "delete" | "sin" | "cos" | "sqrt" | "random" | "round" | "min" | "max" | "abs" | "log" | "pow" | "len" | "sleep" | "exit" | "fetch" | "send" => true,
-            _ => self.functions.contains_key(func_name),
-        }
+        builtins::is_builtin(func_name) || self.functions.contains_key(func_name)
     }
 
     pub fn is_function_arity_valid(&self, func_name: &str, args_count: usize) -> bool {

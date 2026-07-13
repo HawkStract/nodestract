@@ -27,6 +27,7 @@ pub struct Engine {
     pub translation_engine: TranslationEngine,
     pub import_manager: ImportManager,
     pub interpreter: Interpreter,
+    pub quiet: bool,
 }
 
 impl Engine {
@@ -39,6 +40,7 @@ impl Engine {
             translation_engine,
             import_manager,
             interpreter,
+            quiet: false,
         }
     }
 
@@ -49,7 +51,9 @@ impl Engine {
         let (stripped_source, active_import_manager) = match check::validate_imports(source, &self.translation_engine) {
             Ok(res) => res,
             Err(err_msg) => {
-                crate::welcome::show_error(&err_msg);
+                if !self.quiet {
+                    crate::welcome::show_error(&err_msg);
+                }
                 return false;
             }
         };
@@ -69,17 +73,21 @@ impl Engine {
                 self.interpreter = Interpreter::new();
                 self.interpreter.run(program);
                 if let Some(ref exc) = self.interpreter.exception {
-                    let exc_str = match exc {
-                        crate::engine::value::Value::String(s) => s.clone(),
-                        other => other.to_string(),
-                    };
-                    crate::welcome::show_error(&format!("Uncaught Exception: {}", exc_str));
+                    if !self.quiet {
+                        let exc_str = match exc {
+                            crate::engine::value::Value::String(s) => s.clone(),
+                            other => other.to_string(),
+                        };
+                        crate::welcome::show_error(&format!("Uncaught Exception: {}", exc_str));
+                    }
                     return false;
                 }
                 true
             }
             Err(err_msg) => {
-                crate::welcome::show_error(&err_msg);
+                if !self.quiet {
+                    crate::welcome::show_error(&err_msg);
+                }
                 false
             }
         }

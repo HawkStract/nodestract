@@ -320,6 +320,7 @@ mod tests {
     #[test]
     fn test_short_circuit_and_try_finally_and_dot_notation() {
         let mut engine = Engine::new();
+        engine.quiet = true;
         
         // 1. Test corto circuito (non deve sollevare errore per variabile indefinita)
         let source_sc = "importa italiano da translate\ncrea x = falso && indefinita\ncrea y = vero || indefinita\n";

@@ -2,7 +2,6 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    embed_resource::compile("bin/nodestract.rc", embed_resource::NONE);
 
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("generated_tests.rs");

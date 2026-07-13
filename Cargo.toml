@@ -10,8 +10,6 @@ fastrand = "2.1.0"
 ureq = { version = "2.9.12", default-features = false, features = ["json", "native-tls"] }
 serde_json = "1.0"
 
-[build-dependencies]
-embed-resource = "2.5"
 
 [[example]]
 name = "lessons"

@@ -11,7 +11,6 @@ pub fn show_banner() {
    | |\\  | (_) \\ (_| |  __/  ___) | |_| | | (_| | (__| |_ 
    |_| \\_|\\___/ \\__,_|\\___| |____/ \\__|_|  \\__,_|\\___|\\__|
    
-   HawkStract Ecosystem - Secure. Atomic. Abstract.
    {}", COLOR_CYAN, COLOR_RESET);
 }
 

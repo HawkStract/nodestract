@@ -1,7 +1,7 @@
 {
   "translate": ["english", "italian", "spanish", "french", "german", "portuguese", "romanian"],
   "nio": ["print", "input"],
-  "nfs": ["open", "read", "write", "delete"],
+  "nfs": ["read", "write", "delete"],
   "nnet": ["fetch", "send"],
   "nmath": ["sin", "cos", "sqrt", "random", "round", "min", "max", "abs", "log", "pow"]
 }

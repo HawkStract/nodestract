@@ -32,8 +32,6 @@
   "delete": ["elimina", "nfs"],
   "sleep": ["attesa", ""],
   "exit": ["esci", ""],
-  "json": ["json", ""],
-  "parse": ["analizza", ""],
   "sin": ["sen", "nmath"],
   "cos": ["cos", "nmath"],
   "sqrt": ["radq", "nmath"],

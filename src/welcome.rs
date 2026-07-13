@@ -19,6 +19,7 @@ pub fn show_usage() {
     println!("Usage:");
     println!("  cargo run -- build <file.ns>           Compile and run a NodeStract file");
     println!("  cargo run -- version                   Show version information");
+    println!("  cargo run --example lessons            Launch the interactive lessons mode");
     println!("  cargo test                             Run the unit and integration test suite");
     println!("\nLanguages supported concurrently: en, it, es, fr, de, pt, ro");
 }

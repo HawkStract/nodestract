@@ -32,8 +32,6 @@
   "delete": ["sterge", "nfs"],
   "sleep": ["pauza", ""],
   "exit": ["iesire", ""],
-  "json": ["json", ""],
-  "parse": ["parseaza", ""],
   "sin": ["sinus", "nmath"],
   "cos": ["cosinus", "nmath"],
   "sqrt": ["radical", "nmath"],
